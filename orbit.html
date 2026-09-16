@@ -1,0 +1,1676 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ORBIT — Technology That Adapts to You</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ---------- tokens ---------- */
+:root{
+  --bg:#0B1220; --surface:#111827; --elev:#172033;
+  --primary:#4F46E5; --accent:#06B6D4; --violet:#7C3AED;
+  --text:#FFFFFF; --muted:#A1A1AA;
+  --success:#34D399; --warn:#FBBF24; --error:#F87171;
+  --border:rgba(255,255,255,.10); --border-strong:rgba(255,255,255,.22);
+  --shadow:0 18px 44px rgba(0,0,0,.45);
+  --wall:#243049; --wall-2:#1b2439; --floor:#2c2135; --frame:#0e1524;
+  --radius:18px; --focus:#06B6D4;
+  --scan-ms:1500ms;
+  --dur-1:.18s; --dur-2:.45s; --dur-3:.9s; --dur-4:1.3s;
+  --ease-out:cubic-bezier(.16,1,.3,1); --ease-soft:cubic-bezier(.4,0,.2,1);
+  --room-living:#7C3AED; --room-bedroom:#EC6FA0; --room-kitchen:#34D399;
+  --rug-living:#4C3B63; --rug-bedroom:#5B3D52; --rug-kitchen:#3C4A34;
+  --glow-shadow:0 1px 0 rgba(255,255,255,.05) inset, 0 30px 70px rgba(79,70,229,.22), 0 10px 30px rgba(0,0,0,.5);
+}
+:root[data-theme="light"]{
+  --bg:#F5F7FA; --surface:#FFFFFF; --elev:#FFFFFF;
+  --text:#111827; --muted:#6B7280;
+  --success:#047857; --warn:#B45309; --error:#B91C1C;
+  --border:rgba(17,24,39,.12); --border-strong:rgba(17,24,39,.32);
+  --shadow:0 14px 34px rgba(17,24,39,.10);
+  --wall:#DCE3EF; --wall-2:#C9D4E6; --floor:#C9B9AE; --frame:#9AA6BC;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]):not([data-theme="light"]){
+    --bg:#F5F7FA; --surface:#FFFFFF; --elev:#FFFFFF; --text:#111827; --muted:#6B7280;
+    --border:rgba(17,24,39,.12); --wall:#DCE3EF; --wall-2:#C9D4E6; --floor:#C9B9AE; --frame:#9AA6BC;
+  }
+}
+html[data-contrast="high"]{
+  --border:var(--text); --border-strong:var(--text); --muted:var(--text);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1100px 560px at 12% -8%, color-mix(in srgb,var(--primary) 16%,transparent), transparent 60%),
+    radial-gradient(900px 520px at 100% 0%, color-mix(in srgb,var(--accent) 12%,transparent), transparent 55%),
+    var(--bg);
+  color:var(--text);
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:calc(16px * var(--text-scale,1));
+  line-height:1.5; -webkit-font-smoothing:antialiased;
+  min-height:100dvh;
+}
+body[data-mode="assist"]{font-family:Lexend,Inter,system-ui,sans-serif}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:none}
+h1,h2,h3{margin:0;line-height:1.15;letter-spacing:-.02em}
+:focus-visible{outline:3px solid var(--focus); outline-offset:3px; border-radius:8px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- layout ---------- */
+.shell{max-width:1360px;margin:0 auto;padding:16px 20px 40px}
+header.top{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:14px 16px;border:1px solid var(--border);border-radius:var(--radius);
+  background:linear-gradient(180deg,var(--elev),var(--surface));
+  backdrop-filter:blur(10px);position:sticky;top:10px;z-index:10;
+  box-shadow:0 10px 30px rgba(0,0,0,.16);
+}
+.brand{display:flex;align-items:center;gap:11px;margin-right:auto}
+.brand .words{display:flex;flex-direction:column}
+.brand strong{font-size:1.18rem;letter-spacing:.14em;font-weight:600}
+.brand span{font-size:.72rem;color:var(--muted);letter-spacing:.03em}
+.where{
+  display:flex;align-items:center;gap:8px;padding:7px 13px;border-radius:999px;
+  background:var(--surface);border:1px solid var(--border);font-size:.82rem;color:var(--muted)
+}
+.where b{color:var(--text);font-weight:600}
+.iconbtn{
+  width:42px;height:42px;border-radius:12px;border:1px solid var(--border);
+  background:var(--surface);display:grid;place-items:center;transition:border-color var(--dur-1),transform var(--dur-1)
+}
+.iconbtn:hover{border-color:var(--border-strong);transform:translateY(-1px)}
+.modeswitch{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:4px;gap:4px}
+.modeswitch button{padding:8px 16px;border-radius:999px;font-size:.86rem;font-weight:600;color:var(--muted);transition:all var(--dur-1)}
+.modeswitch button[aria-pressed="true"]{background:var(--primary);color:#fff}
+
+nav.tabs{display:flex;gap:8px;overflow-x:auto;padding:12px 0 2px;scrollbar-width:none;position:sticky;top:78px;z-index:9;background:linear-gradient(var(--bg) 60%,transparent)}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{
+  padding:10px 18px;border-radius:999px;border:1px solid var(--border);background:var(--surface);
+  color:var(--muted);font-weight:500;white-space:nowrap;transition:all var(--dur-1)
+}
+nav.tabs button[aria-current="page"]{background:var(--text);color:var(--bg);border-color:var(--text)}
+
+/* room view + controls, side by side so nothing needs scrolling to be seen together */
+.workspace{display:grid;grid-template-columns:minmax(320px,44%) 1fr;gap:20px;align-items:start;margin-top:14px}
+.stagecol{position:sticky;top:134px}
+.sidecol{display:flex;flex-direction:column;gap:14px;max-height:calc(100dvh - 168px);overflow-y:auto;padding:2px 4px 2px 2px;scrollbar-width:thin}
+.sidecol::-webkit-scrollbar{width:7px}
+.sidecol::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:99px}
+@media(max-width:980px){
+  .workspace{grid-template-columns:1fr}
+  .stagecol{position:static}
+  .sidecol{max-height:none;overflow:visible}
+  nav.tabs{position:static;background:none}
+}
+
+.grid{display:grid;gap:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;transition:border-color var(--dur-2),transform var(--dur-2),box-shadow var(--dur-2)}
+.card h3{font-size:1.02rem;margin-bottom:4px}
+.sub{color:var(--muted);font-size:.86rem}
+.statrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:12px;margin-top:14px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;transition:transform var(--dur-2) var(--ease-out),border-color var(--dur-2)}
+.stat:hover{transform:translateY(-2px);border-color:var(--border-strong)}
+.stat .v{font-size:1.5rem;font-weight:600;letter-spacing:-.03em;transition:color var(--dur-2)}
+.stat .k{color:var(--muted);font-size:.78rem;margin-top:2px}
+@media(max-width:820px){.statrow{grid-template-columns:repeat(2,1fr)}}
+
+/* ---------- scene ---------- */
+#envHost{margin-top:0}
+.stage{
+  position:relative;border-radius:22px;overflow:hidden;border:1px solid var(--border);
+  background:var(--frame);box-shadow:var(--glow-shadow);
+  transition:box-shadow var(--dur-3) var(--ease-soft);
+}
+.stage::before{
+  content:"";position:absolute;inset:0;z-index:2;pointer-events:none;border-radius:inherit;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);
+}
+.stage svg{display:block;width:100%;height:auto}
+.stage .stagetop{
+  position:absolute;left:12px;top:12px;right:12px;display:flex;gap:8px;flex-wrap:wrap;
+  align-items:flex-start;justify-content:flex-end;z-index:3;pointer-events:none;
+}
+.roomSwitch{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;pointer-events:auto}
+.roomchip{
+  display:flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;font-size:.78rem;font-weight:600;
+  background:rgba(8,12,22,.6);color:#fff;border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(8px);
+  transition:all var(--dur-2) var(--ease-out);
+}
+.roomchip:hover{background:rgba(8,12,22,.82);transform:translateY(-1px)}
+.roomchip.active{background:linear-gradient(135deg,var(--primary),var(--violet));border-color:transparent;box-shadow:0 6px 18px rgba(79,70,229,.45)}
+.roomchip .roomdot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.35);flex:none;transition:all var(--dur-2)}
+.roomchip .roomdot.on{background:#FFE7B3;box-shadow:0 0 8px 2px rgba(255,231,179,.85)}
+.stage .stagebar{
+  position:absolute;left:12px;bottom:12px;right:12px;display:flex;gap:8px;flex-wrap:wrap;pointer-events:none;z-index:3;
+}
+.pill{
+  background:rgba(8,12,22,.72);color:#fff;border:1px solid rgba(255,255,255,.18);
+  padding:6px 12px;border-radius:999px;font-size:.76rem;backdrop-filter:blur(6px);
+  transition:background var(--dur-2) var(--ease-soft);
+}
+.hotspot{cursor:pointer}
+.hotspot .hit{fill:transparent}
+.hotspot:hover .ring,.hotspot:focus-visible .ring{opacity:1}
+.ring{opacity:0;transition:opacity var(--dur-1)}
+#sceneWrap *{transition:opacity var(--dur-3) var(--ease-soft), transform var(--dur-3) var(--ease-soft), fill var(--dur-3) ease, stroke-dashoffset var(--dur-3) var(--ease-soft)}
+
+/* per-room furniture crossfade */
+#sceneWrap .roomLayer{opacity:0;transform:translateY(16px) scale(.985);transform-origin:50% 100%;
+  transition:opacity var(--dur-4) var(--ease-out), transform var(--dur-4) var(--ease-out) !important;
+  pointer-events:none;}
+#sceneWrap .roomLayer.roomActive{opacity:1;transform:translateY(0) scale(1)}
+
+/* micro-animations */
+@keyframes tvFlicker{0%{opacity:0}8%{opacity:.9}14%{opacity:.15}22%{opacity:1}100%{opacity:1}}
+.tv-on-anim{animation:tvFlicker .6s steps(6,end)}
+@keyframes boltSnap{0%{transform:scale(1)}45%{transform:scale(1.35)}100%{transform:scale(1)}}
+.bolt-anim{animation:boltSnap .5s var(--ease-out)}
+@keyframes lampPulse{0%,100%{opacity:var(--pulseA,.8)}50%{opacity:1}}
+.lamp-on .lampGlowAnim{animation:lampPulse 3.2s ease-in-out infinite}
+@keyframes rugFade{from{opacity:0;transform:scaleX(.9)}to{opacity:1;transform:scaleX(1)}}
+.stage.switching #sceneWrap{animation:sceneShift var(--dur-4) var(--ease-out)}
+@keyframes sceneShift{0%{filter:brightness(1)}35%{filter:brightness(1.07) saturate(1.08)}100%{filter:brightness(1)}}
+
+/* ---------- controls ---------- */
+.roomcard{display:grid;gap:14px}
+.switchrow{display:flex;gap:10px;flex-wrap:wrap}
+.btn{
+  padding:11px 18px;border-radius:12px;border:1px solid var(--border);background:var(--elev);
+  font-weight:600;font-size:.9rem;transition:all var(--dur-2) var(--ease-out)
+}
+.btn:hover{border-color:var(--border-strong);transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn.ghost{background:transparent}
+.btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#05202a}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:30px;background:transparent
+}
+input[type=range]::-webkit-slider-runnable-track{height:10px;border-radius:999px;background:linear-gradient(90deg,var(--primary),var(--accent))}
+input[type=range]::-moz-range-track{height:10px;border-radius:999px;background:linear-gradient(90deg,var(--primary),var(--accent))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid var(--primary);margin-top:-8px;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid var(--primary)}
+.bigval{font-size:2.1rem;font-weight:600;letter-spacing:-.04em}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.dot.on{background:var(--success)}
+.dot.off{background:var(--error)}
+
+.scenecard{
+  text-align:left;width:100%;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:0;overflow:hidden;transition:all var(--dur-1)
+}
+.scenecard:hover{border-color:var(--border-strong);transform:translateY(-3px);box-shadow:0 16px 34px rgba(0,0,0,.28)}
+.scenecard .preview{height:110px;position:relative;overflow:hidden}
+.scenecard .preview::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.22) 45%,transparent 60%);transform:translateX(-120%);transition:transform .8s var(--ease-out)}
+.scenecard:hover .preview::after{transform:translateX(60%)}
+.scenecard .body{padding:14px 16px 16px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.chip{font-size:.72rem;padding:4px 9px;border-radius:999px;background:var(--elev);border:1px solid var(--border);color:var(--muted)}
+
+.log{display:grid;gap:2px}
+.logrow{display:grid;grid-template-columns:64px 1fr;gap:12px;padding:12px 4px;border-bottom:1px solid var(--border);align-items:baseline}
+.logrow time{color:var(--muted);font-variant-numeric:tabular-nums;font-size:.84rem}
+.empty{padding:34px 18px;text-align:center;color:var(--muted);border:1px dashed var(--border);border-radius:var(--radius)}
+
+/* ---------- toast / modal ---------- */
+#toast{
+  position:fixed;left:50%;bottom:24px;transform:translate(-50%,140%);z-index:60;
+  display:flex;align-items:center;gap:14px;max-width:min(92vw,560px);
+  background:var(--elev);border:1px solid var(--border-strong);border-radius:14px;
+  padding:13px 16px;box-shadow:var(--shadow);transition:transform var(--dur-2) cubic-bezier(.2,.8,.2,1)
+}
+#toast.show{transform:translate(-50%,0)}
+.backdrop{
+  position:fixed;inset:0;background:rgba(5,9,17,.72);z-index:70;display:grid;place-items:center;
+  padding:20px;backdrop-filter:blur(4px)
+}
+.backdrop[hidden]{display:none}
+.sheet{
+  background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:24px;
+  width:min(560px,100%);max-height:86dvh;overflow:auto;box-shadow:var(--shadow)
+}
+.sheet h2{font-size:1.35rem;margin-bottom:6px}
+.willdo{display:grid;gap:8px;margin:16px 0}
+.willdo li{display:flex;gap:10px;align-items:center;list-style:none;padding:10px 12px;background:var(--elev);border-radius:12px;font-size:.9rem}
+.sheet .actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:18px}
+.setrow{display:grid;gap:8px;padding:14px 0;border-bottom:1px solid var(--border)}
+.setrow > label{font-weight:600;font-size:.92rem}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:var(--elev);font-size:.85rem}
+.seg button[aria-pressed="true"]{background:var(--primary);border-color:var(--primary);color:#fff}
+
+/* ---------- assist ---------- */
+#assist{display:none}
+body[data-mode="assist"] #standard{display:none}
+body[data-mode="assist"] #assist{display:block}
+body[data-mode="assist"] .roomSwitch{display:none}
+.assistwrap{max-width:1080px;margin:0 auto;padding:16px 18px 40px;min-height:100dvh;display:flex;flex-direction:column;gap:16px}
+.assistwrap.split{max-width:1360px}
+.assistSplit{display:grid;grid-template-columns:minmax(300px,42%) 1fr;gap:22px;align-items:start}
+.assistScene{position:sticky;top:20px}
+.assistMain{display:flex;flex-direction:column;gap:16px;min-width:0}
+@media(max-width:980px){
+  .assistSplit{grid-template-columns:1fr}
+  .assistScene{position:static}
+}
+.crumb{display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:1rem}
+.crumb b{color:var(--text)}
+.assisthead{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.assisthead .title{font-size:clamp(1.6rem,4vw,2.3rem);font-weight:600;letter-spacing:-.02em}
+.instruct{font-size:clamp(1.05rem,2.4vw,1.35rem);color:var(--muted)}
+.caption{
+  display:flex;align-items:center;gap:12px;border:1px solid var(--border);border-radius:14px;
+  padding:12px 16px;background:var(--surface);font-size:1rem;min-height:56px
+}
+.caption .eq{display:flex;gap:3px;align-items:flex-end;height:18px}
+.caption .eq i{width:3px;background:var(--accent);height:6px;border-radius:2px;animation:eq .9s infinite ease-in-out}
+.caption .eq i:nth-child(2){animation-delay:.15s}.caption .eq i:nth-child(3){animation-delay:.3s}
+@keyframes eq{0%,100%{height:5px}50%{height:17px}}
+.targets{display:grid;gap:14px;grid-template-columns:repeat(2,1fr)}
+@media(max-width:700px){.targets{grid-template-columns:1fr}}
+.target{
+  min-height:82px;display:flex;align-items:center;gap:16px;text-align:left;
+  padding:18px 22px;border-radius:18px;border:2px solid var(--border);
+  background:var(--surface);font-size:clamp(1.05rem,2.2vw,1.3rem);font-weight:600;
+  transition:transform var(--dur-1),border-color var(--dur-1),background var(--dur-1)
+}
+.target .meta{display:block;font-weight:400;font-size:.82em;color:var(--muted);margin-top:2px}
+.target .glyph{width:44px;height:44px;flex:none;display:grid;place-items:center;border-radius:12px;background:var(--elev)}
+.target.scanning{
+  border-color:var(--accent);background:var(--elev);
+  transform:scale(1.025);
+  box-shadow:0 0 0 calc(3px * var(--focus-mult,1)) color-mix(in srgb,var(--accent) 55%,transparent),0 14px 40px rgba(6,182,212,.22)
+}
+.target.scanning::after{content:"press switch";margin-left:auto;font-size:.72em;font-weight:600;color:var(--accent);white-space:nowrap}
+.target.picked{border-color:var(--success);box-shadow:0 0 0 3px color-mix(in srgb,var(--success) 45%,transparent)}
+.scanbar{height:6px;border-radius:999px;background:var(--elev);overflow:hidden;border:1px solid var(--border)}
+.scanbar i{display:block;height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));width:0;animation:fill var(--scan-ms) linear}
+@keyframes fill{from{width:0}to{width:100%}}
+.controlrow{display:flex;gap:12px;flex-wrap:wrap}
+.control{
+  min-height:72px;flex:1 1 150px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;
+  border-radius:16px;border:2px solid var(--border);background:var(--surface);font-weight:600;font-size:1.02rem;padding:10px
+}
+.control.scanning{border-color:var(--accent);background:var(--elev);transform:scale(1.02);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 50%,transparent)}
+.hero{
+  display:grid;place-items:center;text-align:center;gap:22px;min-height:66dvh;
+  border:1px solid var(--border);border-radius:26px;background:radial-gradient(1200px 600px at 50% -10%,color-mix(in srgb,var(--primary) 26%,transparent),transparent 70%),var(--surface);
+  padding:40px 24px
+}
+.hero h1{font-size:clamp(2.2rem,7vw,4rem);letter-spacing:.1em;font-weight:600}
+.hero p{margin:0;color:var(--muted);font-size:clamp(1.05rem,2.6vw,1.35rem);max-width:34ch}
+.press{
+  display:inline-flex;align-items:center;gap:12px;padding:16px 26px;border-radius:999px;
+  border:2px solid var(--accent);font-size:1.1rem;font-weight:600
+}
+.press kbd{background:var(--elev);border:1px solid var(--border-strong);border-radius:8px;padding:5px 12px;font-family:inherit}
+.pulse{animation:pulse 2.2s infinite ease-in-out}
+@keyframes pulse{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.03)}}
+.review{border:2px solid var(--border-strong);border-radius:22px;padding:26px;background:var(--surface);display:grid;gap:10px}
+.review .line{font-size:clamp(1.3rem,3.4vw,1.9rem);font-weight:600}
+.spinner{width:56px;height:56px;border-radius:50%;border:5px solid var(--elev);border-top-color:var(--accent);animation:spin 1s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.donemark{width:76px;height:76px;border-radius:50%;background:color-mix(in srgb,var(--success) 25%,transparent);border:3px solid var(--success);display:grid;place-items:center;margin:0 auto}
+.seqlist{display:grid;gap:8px;margin:0;padding:0}
+.seqlist li{list-style:none;display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:12px;background:var(--elev);opacity:.4;font-size:1.02rem}
+.seqlist li.done{opacity:1;border-left:4px solid var(--success)}
+.seqlist li.active{opacity:1;border-left:4px solid var(--accent)}
+
+/* motion */
+html[data-motion="reduced"] #sceneWrap *{transition-duration:.15s !important}
+html[data-motion="reduced"] .pulse,html[data-motion="reduced"] .caption .eq i{animation:none}
+html[data-motion="reduced"] .scanbar i{animation:none;width:100%}
+html[data-motion="reduced"] .target.scanning{transform:none}
+html[data-motion="reduced"] .scenecard:hover{transform:none}
+html[data-motion="reduced"] .roomLayer{transition-duration:.12s;transform:none}
+html[data-motion="reduced"] .tv-on-anim,html[data-motion="reduced"] .bolt-anim,
+html[data-motion="reduced"] .lamp-on .lampGlowAnim,html[data-motion="reduced"] .stage.switching #sceneWrap{animation:none}
+html[data-motion="reduced"] .roomchip{transition-duration:.12s}
+@media (prefers-reduced-motion:reduce){ .pulse{animation:none} }
+
+/* =========================================================
+   SPLASH / INTRO  — revolving orbit logo, on every load & refresh
+   ========================================================= */
+#splash{
+  position:fixed;inset:0;z-index:9999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;
+  background:
+    radial-gradient(1100px 620px at 18% -10%, color-mix(in srgb,var(--primary) 30%,transparent), transparent 60%),
+    radial-gradient(900px 560px at 100% 8%, color-mix(in srgb,var(--accent) 24%,transparent), transparent 55%),
+    radial-gradient(900px 560px at 0% 100%, color-mix(in srgb,var(--violet) 18%,transparent), transparent 55%),
+    var(--bg);
+  transition:opacity .8s var(--ease-soft), visibility .8s;
+}
+#splash[hidden]{display:none}
+#splash.splash-out{opacity:0;visibility:hidden;pointer-events:none}
+#splash .orbitLogo{width:min(38vw,180px);height:min(38vw,180px);filter:drop-shadow(0 18px 44px rgba(79,70,229,.35))}
+#splash .orbitLogo .core{animation:coreGlow 2.4s ease-in-out infinite}
+@keyframes coreGlow{0%,100%{r:13;opacity:1}50%{r:15;opacity:.85}}
+#splash .brandmark{display:flex;flex-direction:column;align-items:center;gap:8px}
+#splash .welcometext{
+  font-family:Lexend,Inter,sans-serif;font-size:clamp(1.5rem,4.6vw,2.4rem);font-weight:600;letter-spacing:.03em;
+  text-align:center;opacity:0;transform:translateY(10px);
+  background:linear-gradient(120deg,var(--text),var(--accent) 60%,var(--violet));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:welcomeFade .9s var(--ease-out) forwards .85s;
+}
+#splash .subtext{
+  color:var(--muted);font-size:.92rem;letter-spacing:.06em;text-transform:uppercase;
+  opacity:0;transform:translateY(8px);animation:welcomeFade .9s var(--ease-out) forwards 1.15s;
+}
+@keyframes welcomeFade{to{opacity:1;transform:translateY(0)}}
+#splash .loadbar{width:min(220px,60vw);height:4px;border-radius:999px;background:var(--elev);overflow:hidden;
+  opacity:0;animation:welcomeFade .6s ease forwards 1.3s}
+#splash .loadbar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--primary),var(--accent),var(--violet));
+  width:0%;animation:loadfill 1.6s var(--ease-soft) forwards .5s}
+@keyframes loadfill{to{width:100%}}
+
+/* home page grand entrance */
+#standard{opacity:0}
+#standard.revealed{animation:homeReveal .9s var(--ease-out) forwards}
+@keyframes homeReveal{from{opacity:0;transform:translateY(26px) scale(.965);filter:blur(6px)}to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+#standard.revealed header.top{animation:itemPop .75s var(--ease-out) both;animation-delay:.12s}
+#standard.revealed nav.tabs{animation:itemPop .75s var(--ease-out) both;animation-delay:.26s}
+#standard.revealed #stdView{animation:itemPop .85s var(--ease-out) both;animation-delay:.4s}
+@keyframes itemPop{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+html[data-motion="reduced"] #splash,
+html[data-motion="reduced"] #splash *{animation-duration:.01s !important;animation-delay:0s !important;transition-duration:.15s !important}
+html[data-motion="reduced"] #standard.revealed,
+html[data-motion="reduced"] #standard.revealed *{animation:none !important;filter:none !important}
+@media (prefers-reduced-motion:reduce){
+  #splash,#splash *{animation-duration:.01s !important;animation-delay:0s !important}
+  #standard.revealed,#standard.revealed *{animation:none !important}
+}
+</style>
+</head>
+<body data-mode="standard">
+
+<div id="splash" role="status" aria-live="polite">
+  <div class="brandmark">
+    <svg class="orbitLogo" viewBox="0 0 200 200" aria-hidden="true">
+      <circle class="core" cx="100" cy="100" r="13" fill="var(--accent)"/>
+      <ellipse cx="100" cy="100" rx="82" ry="44" fill="none" stroke="var(--primary)" stroke-width="2.4" opacity=".45" transform="rotate(-24 100 100)"/>
+      <ellipse cx="100" cy="100" rx="58" ry="58" fill="none" stroke="var(--violet)" stroke-width="1.5" opacity=".3"/>
+      <ellipse cx="100" cy="100" rx="82" ry="44" fill="none" stroke="var(--accent)" stroke-width="1.2" opacity=".2" transform="rotate(40 100 100)"/>
+      <g transform="rotate(-24 100 100)">
+        <circle cx="182" cy="100" r="7" fill="var(--violet)"/>
+        <animateTransform attributeName="transform" type="rotate" from="-24 100 100" to="336 100 100" dur="3.2s" repeatCount="indefinite"/>
+      </g>
+      <g>
+        <circle cx="100" cy="42" r="5.5" fill="var(--primary)"/>
+        <animateTransform attributeName="transform" type="rotate" from="360 100 100" to="0 100 100" dur="4.4s" repeatCount="indefinite"/>
+      </g>
+      <g transform="rotate(40 100 100)">
+        <circle cx="182" cy="100" r="4.5" fill="var(--accent)" opacity=".85"/>
+        <animateTransform attributeName="transform" type="rotate" from="40 100 100" to="400 100 100" dur="2.5s" repeatCount="indefinite"/>
+      </g>
+    </svg>
+    <span class="welcometext">Welcome to your home</span>
+    <span class="subtext">ORBIT is getting things ready</span>
+    <div class="loadbar"><i></i></div>
+  </div>
+</div>
+
+<div id="standard">
+  <div class="shell">
+    <header class="top">
+      <div class="brand">
+        <svg width="34" height="34" viewBox="0 0 48 48" aria-hidden="true">
+          <circle cx="24" cy="24" r="6" fill="var(--accent)"/>
+          <ellipse cx="24" cy="24" rx="19" ry="10" fill="none" stroke="var(--primary)" stroke-width="2.6" transform="rotate(-24 24 24)"/>
+          <circle cx="40" cy="17" r="3.4" fill="var(--violet)"/>
+          <circle cx="8" cy="31" r="3.4" fill="var(--primary)"/>
+        </svg>
+        <span class="words"><strong>ORBIT</strong><span>Technology That Adapts to You.</span></span>
+      </div>
+      <div class="where"><span>Room</span><b id="whereRoom">Living Room</b></div>
+      <div class="where" id="voiceStatus"><span class="dot" id="voiceDot"></span><b>Voice</b><span id="voiceState">off</span></div>
+      <div class="modeswitch" role="group" aria-label="Interaction mode">
+        <button id="mStd" aria-pressed="true">Standard</button>
+        <button id="mAsst" aria-pressed="false">Assist</button>
+      </div>
+      <button class="iconbtn" id="btnTheme" aria-label="Switch theme" title="Switch theme">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+      </button>
+      <button class="iconbtn" id="btnHelp" aria-label="Help" title="Help"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.4 2.3c-.6.3-.9.8-.9 1.5v.4"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg></button>
+      <button class="iconbtn" id="btnSettings" aria-label="Accessibility settings" title="Accessibility settings"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 7 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 3 14a2 2 0 1 1 0-4 1.7 1.7 0 0 0 1.5-2.7l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 10 3a2 2 0 1 1 4 0 1.7 1.7 0 0 0 2.7 1.5l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 21 10a2 2 0 1 1 0 4 1.7 1.7 0 0 0-1.6 1Z"/></svg></button>
+    </header>
+
+    <nav class="tabs" id="tabs" aria-label="Sections"></nav>
+    <main id="stdView"></main>
+  </div>
+</div>
+
+<div id="assist"><div class="assistwrap" id="assistView"></div></div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<div class="backdrop" id="modal" hidden><div class="sheet" role="dialog" aria-modal="true" id="modalSheet"></div></div>
+<div class="backdrop" id="settings" hidden><div class="sheet" role="dialog" aria-modal="true" aria-label="Accessibility settings" id="settingsSheet"></div></div>
+
+<script>
+"use strict";
+/* =========================================================
+   1. SHARED STATE  — one store, both interaction modes
+   ========================================================= */
+const ROOMS = {
+  living:{name:"Living Room", on:true, brightness:80},
+  bedroom:{name:"Bedroom", on:false, brightness:45},
+  kitchen:{name:"Kitchen", on:true, brightness:65}
+};
+const state = {
+  mode:"standard",
+  view:"home",
+  activeRoom:"living",
+  rooms:ROOMS,
+  devices:{
+    tv:{on:false},
+    curtains:{open:true},
+    lock:{locked:false},
+    climate:{current:24, target:24, fan:false},
+    security:{away:false}
+  },
+  history:[],
+  session:{started:Date.now(), tasks:0},
+  profile:"default",
+  settings:{
+    scanSpeed:1500, voiceEnabled:false, voiceRate:1, voiceVolume:1,
+    verbose:false, textScale:1, contrast:"normal", focusStrength:1,
+    reducedMotion:false, switchKey:" ", theme:"dark"
+  },
+  assist:{
+    step:"welcome", scanIndex:0, scanning:false, paused:false,
+    module:null, room:null, action:null, preset:null, scene:null, error:null
+  },
+  lastUndo:null,
+  runningScene:null,
+  sceneStepIndex:-1
+};
+const PRESET_VALUE={Low:20, Medium:50, High:100};
+const SCENES = {
+  morning:{name:"Good Morning", blurb:"Wake the house up gently.",
+    effects:["Open the curtains","Living Room and Kitchen lights to 90%","Set temperature to 23°"],
+    apply(){ setCurtains(true); setLight("living",true,90); setLight("kitchen",true,90); setTarget(23); setTV(false); },
+    steps:[["Curtains opening",()=>setCurtains(true)],["Lights brightening",()=>{setLight("living",true,90);setLight("kitchen",true,90);}],["Temperature set to 23 degrees",()=>setTarget(23)]]},
+  movie:{name:"Movie Night", blurb:"Dim, close, lock, play.",
+    effects:["Dim Living Room lights to 20%","Close the curtains","Turn on the TV","Set temperature to 22°","Lock the main door"],
+    apply(){ setLight("living",true,20); setCurtains(false); setTV(true); setTarget(22); setLock(true); },
+    steps:[["Lights dimming",()=>setLight("living",true,20)],["Curtains closing",()=>setCurtains(false)],["Television on",()=>setTV(true)],["Temperature set to 22 degrees",()=>setTarget(22)],["Door locked",()=>setLock(true)]]},
+  away:{name:"Away", blurb:"Everything off, door locked.",
+    effects:["All lights off","Turn off the TV","Lock the main door","Turn on away monitoring"],
+    apply(){ Object.keys(state.rooms).forEach(r=>setLight(r,false)); setTV(false); setLock(true); state.devices.security.away=true; },
+    steps:[["Lights off",()=>Object.keys(state.rooms).forEach(r=>setLight(r,false))],["Television off",()=>setTV(false)],["Door locked",()=>{setLock(true);state.devices.security.away=true;}]]},
+  study:{name:"Study", blurb:"Bright, quiet, focused.",
+    effects:["Living Room lights to 100%","Open the curtains","Turn off the TV","Set temperature to 24°"],
+    apply(){ setLight("living",true,100); setCurtains(true); setTV(false); setTarget(24); },
+    steps:[["Lights at full brightness",()=>setLight("living",true,100)],["Curtains opening",()=>setCurtains(true)],["Television off",()=>setTV(false)],["Temperature set to 24 degrees",()=>setTarget(24)]]}
+};
+
+/* ---- persistence (guarded: storage can be unavailable) ---- */
+function saveSettings(){
+  try{ localStorage.setItem("orbit.settings", JSON.stringify(state.settings)); }catch(e){}
+}
+function loadSettings(){
+  try{
+    const raw = localStorage.getItem("orbit.settings");
+    if(raw) Object.assign(state.settings, JSON.parse(raw));
+  }catch(e){}
+}
+
+/* =========================================================
+   2. STATE MUTATORS  (every visible control routes here)
+   ========================================================= */
+function log(text){
+  const d=new Date();
+  state.history.unshift({t:`${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`, text});
+  if(state.history.length>40) state.history.pop();
+}
+function setLight(room,on,brightness){
+  const r=state.rooms[room]; if(!r) return;
+  r.on = on;
+  if(typeof brightness==="number") r.brightness = Math.max(0,Math.min(100,Math.round(brightness)));
+  paintScene();
+}
+function setCurtains(open){ state.devices.curtains.open=open; paintScene(); }
+function setTV(on){ state.devices.tv.on=on; paintScene(); }
+function setLock(locked){ state.devices.lock.locked=locked; if(!locked) state.devices.security.away=false; paintScene(); }
+function setTarget(t){
+  state.devices.climate.target=Math.max(16,Math.min(30,t));
+  state.devices.climate.fan = state.devices.climate.target!==state.devices.climate.current;
+  paintScene();
+}
+setInterval(()=>{ // the room actually reaches the temperature you asked for
+  const c=state.devices.climate;
+  if(c.current!==c.target){ c.current += c.current<c.target?1:-1; c.fan=true; paintScene(); if(state.view!=="home") renderStandard(); }
+  else if(c.fan){ c.fan=false; paintScene(); }
+}, 2600);
+
+function lightsOnCount(){ return Object.values(state.rooms).filter(r=>r.on).length; }
+function ambient(){ // 0 = pitch dark, 1 = fully lit
+  const r=state.rooms[state.activeRoom];
+  const base = r.on ? r.brightness/100 : 0.05;
+  const day = state.devices.curtains.open ? 0.32 : 0;
+  return Math.min(1, base*0.78 + day);
+}
+
+/* =========================================================
+   3. VOICE  — announcements stay locked to what is on screen
+   ========================================================= */
+const tts = window.speechSynthesis || null;
+let captionTimer=null, currentUtt=null;
+function setCaption(text){
+  const c=document.getElementById("capText");
+  if(c) c.textContent = text;
+}
+function speak(text, done){
+  setCaption(text);
+  const s=state.settings;
+  const fallback = Math.min(6500, 480 + text.length*(62/Math.max(.6,s.voiceRate)));
+  clearTimeout(captionTimer);
+  if(!s.voiceEnabled || !tts){
+    if(done) captionTimer=setTimeout(done, Math.min(2400,fallback));
+    return;
+  }
+  try{ tts.cancel(); }catch(e){}
+  const u=new SpeechSynthesisUtterance(text);
+  u.rate=s.voiceRate; u.volume=s.voiceVolume; u.pitch=1; u.lang="en-US";
+  let fired=false;
+  const go=()=>{ if(fired) return; fired=true; if(done) done(); };
+  u.onend=go; u.onerror=go;
+  currentUtt=u;
+  captionTimer=setTimeout(go, fallback+1400);
+  try{ tts.speak(u); }catch(e){ go(); }
+}
+function announce(text){ speak(text); }
+function stopVoice(){ try{ tts && tts.cancel(); }catch(e){} clearTimeout(captionTimer); }
+let lastSpoken="";
+function remember(text){ lastSpoken=text; }
+
+/* =========================================================
+   4. THE ROOM  — one scene element, shared by both modes
+   ========================================================= */
+const sceneHTML = `
+<div class="stage" id="sceneWrap">
+<svg viewBox="0 0 900 480" role="img" aria-label="Live view of the home" id="scene">
+  <defs>
+    <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8FC6F2"/><stop offset="100%" stop-color="#E7C79B"/>
+    </linearGradient>
+    <radialGradient id="glowG"><stop offset="0%" stop-color="#FFE7B3" stop-opacity=".95"/><stop offset="100%" stop-color="#FFE7B3" stop-opacity="0"/></radialGradient>
+    <linearGradient id="coneG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFE3A8" stop-opacity=".55"/><stop offset="100%" stop-color="#FFE3A8" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="tvG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6EE7F9"/><stop offset="50%" stop-color="#4F46E5"/><stop offset="100%" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="900" height="480" fill="var(--wall)"/>
+  <rect y="360" width="900" height="120" fill="var(--floor)"/>
+  <rect y="356" width="900" height="6" fill="rgba(0,0,0,.25)"/>
+  <ellipse id="roomRug" cx="470" cy="410" rx="230" ry="34" fill="#4C3B63" opacity=".85"/>
+
+  <!-- window + curtains -->
+  <g>
+    <rect x="512" y="80" width="276" height="200" rx="6" fill="var(--frame)"/>
+    <rect id="sky" x="520" y="88" width="260" height="184" fill="url(#skyG)"/>
+    <circle id="sun" cx="700" cy="140" r="24" fill="#FFF3C4" opacity=".9"/>
+    <rect x="646" y="88" width="8" height="184" fill="var(--frame)"/>
+    <rect x="520" y="176" width="260" height="7" fill="var(--frame)"/>
+    <g id="curtainL"><rect x="520" y="82" width="130" height="192" fill="#B4667F"/><rect x="520" y="82" width="10" height="192" fill="rgba(0,0,0,.18)"/><rect x="560" y="82" width="10" height="192" fill="rgba(0,0,0,.14)"/><rect x="600" y="82" width="10" height="192" fill="rgba(0,0,0,.14)"/></g>
+    <g id="curtainR"><rect x="650" y="82" width="130" height="192" fill="#B4667F"/><rect x="690" y="82" width="10" height="192" fill="rgba(0,0,0,.14)"/><rect x="730" y="82" width="10" height="192" fill="rgba(0,0,0,.14)"/><rect x="770" y="82" width="10" height="192" fill="rgba(0,0,0,.18)"/></g>
+    <rect x="506" y="72" width="288" height="12" rx="6" fill="var(--frame)"/>
+    <g class="hotspot" id="hsCurtain" tabindex="0" role="button" aria-label="Curtains">
+      <rect class="hit" x="506" y="72" width="288" height="212"/>
+      <rect class="ring" x="504" y="70" width="292" height="216" rx="10" fill="none" stroke="#06B6D4" stroke-width="3"/>
+    </g>
+  </g>
+
+  <!-- door + smart lock -->
+  <g>
+    <rect x="40" y="120" width="140" height="240" rx="5" fill="#5B4636"/>
+    <rect x="52" y="134" width="116" height="100" rx="4" fill="rgba(0,0,0,.18)"/>
+    <rect x="52" y="246" width="116" height="100" rx="4" fill="rgba(0,0,0,.18)"/>
+    <circle cx="158" cy="242" r="7" fill="#D8C08A"/>
+    <rect x="122" y="196" width="44" height="34" rx="8" fill="#0F172A" stroke="#334155" stroke-width="2"/>
+    <rect id="boltPin" x="138" y="205" width="12" height="16" rx="3" fill="#F87171"/>
+    <text id="lockLabel" x="110" y="386" text-anchor="middle" font-family="Inter,sans-serif" font-size="19" font-weight="600" fill="#fff">Unlocked</text>
+    <g class="hotspot" id="hsDoor" tabindex="0" role="button" aria-label="Main door">
+      <rect class="hit" x="40" y="120" width="140" height="240"/>
+      <rect class="ring" x="36" y="116" width="148" height="248" rx="10" fill="none" stroke="#06B6D4" stroke-width="3"/>
+    </g>
+  </g>
+
+  <!-- television -->
+  <g>
+    <rect x="236" y="120" width="230" height="140" rx="9" fill="#0B1220" stroke="#334155" stroke-width="3"/>
+    <rect id="tvScreen" x="246" y="130" width="210" height="120" rx="4" fill="#14202f"/>
+    <ellipse id="tvGlow" cx="351" cy="190" rx="190" ry="120" fill="url(#glowG)" opacity="0"/>
+    <text id="tvText" x="351" y="196" text-anchor="middle" font-family="Inter,sans-serif" font-size="17" font-weight="600" fill="#0B1220" opacity="0">Now playing</text>
+    <g class="hotspot" id="hsTV" tabindex="0" role="button" aria-label="Television">
+      <rect class="hit" x="236" y="120" width="230" height="140"/>
+      <rect class="ring" x="232" y="116" width="238" height="148" rx="12" fill="none" stroke="#06B6D4" stroke-width="3"/>
+    </g>
+  </g>
+
+  <!-- thermostat -->
+  <g>
+    <circle cx="488" cy="316" r="34" fill="#0F172A" stroke="#334155" stroke-width="3"/>
+    <text id="thermoVal" x="488" y="323" text-anchor="middle" font-family="Inter,sans-serif" font-size="21" font-weight="600" fill="#06B6D4">24°</text>
+    <g id="airflow" opacity="0">
+      <path d="M524 300 q16 -10 32 0" stroke="#06B6D4" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M524 316 q16 -10 32 0" stroke="#06B6D4" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/>
+      <path d="M524 332 q16 -10 32 0" stroke="#06B6D4" stroke-width="3" fill="none" stroke-linecap="round" opacity=".45"/>
+    </g>
+    <g class="hotspot" id="hsThermo" tabindex="0" role="button" aria-label="Thermostat">
+      <rect class="hit" x="450" y="278" width="78" height="78"/>
+      <circle class="ring" cx="488" cy="316" r="40" fill="none" stroke="#06B6D4" stroke-width="3"/>
+    </g>
+  </g>
+
+  <!-- ceiling lamp -->
+  <g>
+    <rect x="316" y="0" width="4" height="46" fill="#334155"/>
+    <path id="lampShade" d="M280 46 h76 l-18 30 h-40 z" fill="#E2E8F0"/>
+    <path id="cone" d="M292 78 L214 360 L424 360 L346 78 Z" fill="url(#coneG)" opacity="0"/>
+    <circle id="lampGlow" cx="318" cy="80" r="56" fill="url(#glowG)" opacity="0"/>
+    <g class="hotspot" id="hsLamp" tabindex="0" role="button" aria-label="Ceiling light">
+      <rect class="hit" x="276" y="0" width="86" height="86"/>
+      <rect class="ring" x="272" y="0" width="94" height="88" rx="12" fill="none" stroke="#06B6D4" stroke-width="3"/>
+    </g>
+  </g>
+
+  <!-- furniture per room (crossfades via .roomLayer / .roomActive) -->
+  <g id="furnLiving" class="roomLayer">
+    <rect x="236" y="286" width="230" height="16" rx="6" fill="#3F4A63"/>
+    <rect x="600" y="300" width="230" height="62" rx="16" fill="#3F4A63"/>
+    <rect x="596" y="278" width="238" height="36" rx="14" fill="#4C5875"/>
+    <rect x="620" y="362" width="16" height="18" fill="#2A3245"/><rect x="794" y="362" width="16" height="18" fill="#2A3245"/>
+    <rect x="640" y="288" width="20" height="20" rx="4" fill="#7C6A9A"/><rect x="668" y="288" width="20" height="20" rx="4" fill="#7C6A9A"/>
+    <circle cx="196" cy="340" r="18" fill="none" stroke="#5A6B8C" stroke-width="3"/>
+    <path d="M196 340 v-14 M196 340 l11 7" stroke="#5A6B8C" stroke-width="3" stroke-linecap="round" fill="none"/>
+  </g>
+  <g id="furnBedroom" class="roomLayer">
+    <rect x="586" y="270" width="252" height="92" rx="14" fill="#3F4A63"/>
+    <rect x="598" y="256" width="86" height="36" rx="12" fill="#F1E9DD"/>
+    <rect x="592" y="290" width="234" height="56" rx="12" fill="#8F6FA8"/>
+    <path d="M592 300 q117 -18 234 0 v10 q-117 -16 -234 0 z" fill="#A785BE" opacity=".8"/>
+    <rect x="806" y="298" width="34" height="46" rx="6" fill="#2A3245"/>
+    <rect x="812" y="278" width="6" height="22" fill="#5A6B8C"/>
+    <circle cx="815" cy="272" r="10" fill="#FFE7B3" opacity=".9"/>
+    <rect x="820" y="362" width="14" height="16" fill="#2A3245"/><rect x="596" y="362" width="14" height="16" fill="#2A3245"/>
+  </g>
+  <g id="furnKitchen" class="roomLayer">
+    <rect x="590" y="288" width="248" height="74" rx="8" fill="#3F4A63"/>
+    <rect x="590" y="282" width="248" height="12" rx="4" fill="#B7C4DD"/>
+    <rect x="606" y="304" width="52" height="42" rx="6" fill="#1E2636"/>
+    <circle cx="618" cy="316" r="5" fill="#64748B"/><circle cx="634" cy="316" r="5" fill="#64748B"/>
+    <circle cx="618" cy="332" r="5" fill="#64748B"/><circle cx="634" cy="332" r="5" fill="#64748B"/>
+    <rect x="712" y="298" width="62" height="60" rx="6" fill="#22293B"/>
+    <rect x="716" y="304" width="54" height="24" rx="3" fill="#101623"/>
+    <rect x="716" y="332" width="54" height="20" rx="3" fill="#101623"/>
+    <g opacity=".85">
+      <line x1="668" y1="230" x2="668" y2="270" stroke="#5A6B8C" stroke-width="2"/>
+      <ellipse cx="668" cy="276" rx="16" ry="9" fill="#E2E8F0"/>
+      <line x1="740" y1="222" x2="740" y2="266" stroke="#5A6B8C" stroke-width="2"/>
+      <ellipse cx="740" cy="272" rx="16" ry="9" fill="#E2E8F0"/>
+    </g>
+  </g>
+
+  <!-- plant -->
+  <g>
+    <path d="M866 330 q-26 -40 -6 -70 q18 26 6 70" fill="#3F7D62"/>
+    <path d="M866 332 q26 -34 8 -64 q-20 24 -8 64" fill="#4E9C7A"/>
+    <path d="M848 330 h38 l-6 34 h-26 z" fill="#8A6247"/>
+  </g>
+
+  <rect id="warm" width="900" height="480" fill="#FFB35C" opacity="0" style="mix-blend-mode:soft-light" pointer-events="none"/>
+  <rect id="dark" width="900" height="480" fill="#050A16" opacity="0" pointer-events="none"/>
+</svg>
+<div class="stagetop">
+  <div class="roomSwitch" id="roomSwitch" role="tablist" aria-label="Switch visualized room"></div>
+</div>
+<div class="stagebar">
+  <span class="pill" id="pillRoom">Living Room</span>
+  <span class="pill" id="pillLight">Lights 80%</span>
+  <span class="pill" id="pillTemp">24°</span>
+  <span class="pill" id="pillLock">Unlocked</span>
+</div>
+</div>`;
+
+const sceneEl = document.createElement("div");
+sceneEl.innerHTML = sceneHTML;
+const sceneNode = sceneEl.firstElementChild;
+function mountScene(host){ if(host && sceneNode.parentElement!==host) host.appendChild(sceneNode); }
+
+const ROOM_RUG={living:"#4C3B63",bedroom:"#5B3D52",kitchen:"#3C4A34"};
+let lastPaintedRoom=null;
+function cap(k){ return k.charAt(0).toUpperCase()+k.slice(1); }
+
+function paintScene(){
+  const q=id=>sceneNode.querySelector("#"+id);
+  const r=state.rooms[state.activeRoom], d=state.devices;
+  const amb=ambient();
+  q("dark").setAttribute("opacity", (0.86 - amb*0.84).toFixed(3));
+  q("warm").setAttribute("opacity", (r.on ? r.brightness/100*0.45 : 0).toFixed(3));
+  q("cone").setAttribute("opacity", (r.on ? 0.15 + r.brightness/100*0.85 : 0).toFixed(3));
+  q("lampGlow").setAttribute("opacity", (r.on ? 0.2 + r.brightness/100*0.8 : 0).toFixed(3));
+  q("lampGlow").classList.toggle("lampGlowAnim", r.on);
+  q("lampShade").setAttribute("fill", r.on ? "#FFF0C6" : "#94A3B8");
+  sceneNode.classList.toggle("lamp-on", r.on);
+
+  const open=d.curtains.open;
+  q("curtainL").setAttribute("transform", open?"translate(-112,0)":"translate(0,0)");
+  q("curtainR").setAttribute("transform", open?"translate(112,0)":"translate(0,0)");
+  q("sky").setAttribute("opacity", open?"1":"1");
+
+  const tvWasOn = q("tvScreen").getAttribute("fill")==="url(#tvG)";
+  q("tvScreen").setAttribute("fill", d.tv.on ? "url(#tvG)" : "#14202f");
+  q("tvGlow").setAttribute("opacity", d.tv.on ? "0.5" : "0");
+  q("tvText").setAttribute("opacity", d.tv.on ? "0.85" : "0");
+  if(d.tv.on && !tvWasOn && !state.settings.reducedMotion){
+    q("tvScreen").classList.remove("tv-on-anim"); void q("tvScreen").offsetWidth;
+    q("tvScreen").classList.add("tv-on-anim");
+  }
+
+  const boltWasLocked = q("boltPin").getAttribute("fill")==="#34D399";
+  q("boltPin").setAttribute("fill", d.lock.locked ? "#34D399" : "#F87171");
+  q("boltPin").setAttribute("transform", d.lock.locked ? "translate(0,4)" : "translate(0,0)");
+  q("lockLabel").textContent = d.lock.locked ? "Locked" : "Unlocked";
+  if(d.lock.locked!==boltWasLocked && !state.settings.reducedMotion){
+    q("boltPin").classList.remove("bolt-anim"); void q("boltPin").offsetWidth;
+    q("boltPin").classList.add("bolt-anim");
+  }
+
+  q("thermoVal").textContent = d.climate.current + "°";
+  q("airflow").setAttribute("opacity", d.climate.fan ? "1":"0");
+
+  ["living","bedroom","kitchen"].forEach(k=>{
+    q("furn"+cap(k)).classList.toggle("roomActive", state.activeRoom===k);
+  });
+  q("roomRug").setAttribute("fill", ROOM_RUG[state.activeRoom]||"#4C3B63");
+
+  if(lastPaintedRoom && lastPaintedRoom!==state.activeRoom){
+    const stageEl=sceneNode.closest(".stage");
+    if(stageEl && !state.settings.reducedMotion){
+      stageEl.classList.remove("switching"); void stageEl.offsetWidth;
+      stageEl.classList.add("switching");
+      setTimeout(()=>stageEl.classList.remove("switching"), 1300);
+    }
+  }
+  lastPaintedRoom=state.activeRoom;
+
+  sceneNode.querySelector("#pillRoom").textContent = r.name;
+  sceneNode.querySelector("#pillLight").textContent = r.on ? `Lights ${r.brightness}%` : "Lights off";
+  sceneNode.querySelector("#pillTemp").textContent = `${d.climate.current}°${d.climate.fan?" · adjusting":""}`;
+  sceneNode.querySelector("#pillLock").textContent = d.lock.locked?"Locked":"Unlocked";
+  const wr=document.getElementById("whereRoom"); if(wr) wr.textContent=r.name;
+
+  renderRoomSwitch();
+}
+
+/* room switcher — lets any view visualize (and switch to) any room */
+function renderRoomSwitch(){
+  const rs=sceneNode.querySelector("#roomSwitch");
+  if(!rs) return;
+  rs.innerHTML=Object.entries(state.rooms).map(([k,rm])=>`
+    <button class="roomchip ${k===state.activeRoom?"active":""}" data-room="${k}" role="tab"
+      aria-selected="${k===state.activeRoom}" aria-label="Show ${esc(rm.name)}">
+      <span class="roomdot ${rm.on?"on":""}"></span>${esc(rm.name)}
+    </button>`).join("");
+  rs.querySelectorAll("[data-room]").forEach(b=>{
+    b.onclick=()=>{ if(state.mode==="standard") switchRoom(b.dataset.room); };
+  });
+}
+function switchRoom(k){
+  if(!state.rooms[k] || state.activeRoom===k) return;
+  state.activeRoom=k;
+  paintScene();
+  if(state.view==="lighting" || state.view==="climate") renderStandard();
+}
+
+/* scene hotspots → open the matching controls (Standard Mode only) */
+function wireHotspots(){
+  const go=(id,fn)=>{
+    const el=sceneNode.querySelector("#"+id);
+    el.addEventListener("click",()=>{ if(state.mode==="standard") fn(); });
+    el.addEventListener("keydown",e=>{ if((e.key==="Enter"||e.key===" ")&&state.mode==="standard"){e.preventDefault();fn();} });
+  };
+  go("hsLamp",()=>nav("lighting"));
+  go("hsTV",()=>{ setTV(!state.devices.tv.on); log(`TV → ${state.devices.tv.on?"On":"Off"}`); toast(`TV turned ${state.devices.tv.on?"on":"off"}.`, ()=>setTV(!state.devices.tv.on)); renderStandard(); });
+  go("hsThermo",()=>nav("climate"));
+  go("hsDoor",()=>nav("security"));
+  go("hsCurtain",()=>{ setCurtains(!state.devices.curtains.open); const o=state.devices.curtains.open; log(`Curtains → ${o?"Open":"Closed"}`); toast(`Curtains ${o?"opened":"closed"}.`, ()=>setCurtains(!o)); renderStandard(); });
+}
+
+/* =========================================================
+   5. STANDARD MODE
+   ========================================================= */
+const TABS=[["home","Home"],["lighting","Lighting"],["climate","Climate"],["security","Security"],["scenes","Scenes"],["activity","Activity"]];
+function nav(v){ state.view=v; renderStandard(); }
+function renderTabs(){
+  const n=document.getElementById("tabs");
+  n.innerHTML=TABS.map(([k,l])=>`<button data-tab="${k}" ${state.view===k?'aria-current="page"':""}>${l}</button>`).join("");
+  n.querySelectorAll("button").forEach(b=>b.onclick=()=>nav(b.dataset.tab));
+}
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+function renderStandard(){
+  renderTabs();
+  const v=document.getElementById("stdView");
+  const d=state.devices;
+  if(state.view==="home"){
+    v.innerHTML=`<div class="workspace">
+      <div class="stagecol"><div id="envHost"></div></div>
+      <div class="sidecol">
+        <div class="statrow">
+          <div class="stat"><div class="v">${d.climate.current}°</div><div class="k">Home temperature${d.climate.fan?` · going to ${d.climate.target}°`:""}</div></div>
+          <div class="stat"><div class="v">${lightsOnCount()} of 3</div><div class="k">Rooms with lights on</div></div>
+          <div class="stat"><div class="v">${d.lock.locked?"Locked":"Unlocked"}</div><div class="k">Main door${d.security.away?" · away mode on":""}</div></div>
+          <div class="stat"><div class="v">${d.tv.on?"On":"Off"}</div><div class="k">Television</div></div>
+        </div>
+        <div class="card"><h3>Quick tips</h3>
+          <p class="sub" style="margin-top:6px">Tap anything in the room — the lamp, the TV, the curtains, the thermostat, the door.</p>
+          <p class="sub" style="margin-top:8px">Use the room pills above the scene to preview any room without leaving this tab.</p>
+        </div>
+      </div>
+    </div>`;
+    mountScene(document.getElementById("envHost"));
+  }
+  else if(state.view==="lighting"){
+    v.innerHTML=`<div class="workspace">
+      <div class="stagecol"><div id="envHost"></div></div>
+      <div class="sidecol">
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">
+      ${Object.entries(state.rooms).map(([k,r])=>`
+        <div class="card roomcard">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+            <h3>${r.name}</h3>
+            <span class="tag"><span class="dot ${r.on?"on":"off"}"></span>${r.on?"On":"Off"}</span>
+          </div>
+          <div class="bigval" data-val="${k}">${r.on?r.brightness+"%":"Off"}</div>
+          <input type="range" min="0" max="100" step="5" value="${r.brightness}" data-slider="${k}" aria-label="${r.name} brightness">
+          <div class="switchrow">
+            <button class="btn" data-on="${k}" aria-pressed="${r.on}">On</button>
+            <button class="btn" data-off="${k}" aria-pressed="${!r.on}">Off</button>
+            <button class="btn ghost" data-preset="${k}:20">Low</button>
+            <button class="btn ghost" data-preset="${k}:50">Medium</button>
+            <button class="btn ghost" data-preset="${k}:100">High</button>
+          </div>
+          ${state.activeRoom===k?'<span class="sub">Shown in the room view</span>':`<button class="btn ghost" data-show="${k}">Show this room</button>`}
+        </div>`).join("")}
+      </div>
+      </div>
+    </div>`;
+    mountScene(document.getElementById("envHost"));
+    v.querySelectorAll("[data-slider]").forEach(s=>{
+      s.addEventListener("input",()=>{
+        const k=s.dataset.slider, val=+s.value;
+        setLight(k, val>0, val);
+        v.querySelector(`[data-val="${k}"]`).textContent = val>0? val+"%":"Off";
+        if(state.activeRoom!==k){ state.activeRoom=k; paintScene(); }
+      });
+      s.addEventListener("change",()=>{
+        const k=s.dataset.slider, r=state.rooms[k], prev=r.brightness;
+        log(`${r.name} lights → ${r.on? r.brightness+"%":"Off"}`);
+        toast(`${r.name} lights set to ${r.brightness}%.`, ()=>{ setLight(k,prev>0,prev); renderStandard(); });
+        renderStandard();
+      });
+    });
+    v.querySelectorAll("[data-on]").forEach(b=>b.onclick=()=>{ const k=b.dataset.on,r=state.rooms[k]; const wasOn=r.on; setLight(k,true, r.brightness||60); state.activeRoom=k; log(`${r.name} lights → On`); toast(`${r.name} lights on.`,()=>{setLight(k,wasOn);renderStandard();}); renderStandard(); });
+    v.querySelectorAll("[data-off]").forEach(b=>b.onclick=()=>{ const k=b.dataset.off,r=state.rooms[k]; const wasOn=r.on; setLight(k,false); state.activeRoom=k; log(`${r.name} lights → Off`); toast(`${r.name} lights off.`,()=>{setLight(k,wasOn);renderStandard();}); renderStandard(); });
+    v.querySelectorAll("[data-preset]").forEach(b=>b.onclick=()=>{
+      const [k,val]=b.dataset.preset.split(":"); const r=state.rooms[k]; const prev={on:r.on,b:r.brightness};
+      setLight(k,true,+val); state.activeRoom=k; log(`${r.name} lights → ${val}%`);
+      toast(`${r.name} lights set to ${val}%.`,()=>{setLight(k,prev.on,prev.b);renderStandard();}); renderStandard();
+    });
+    v.querySelectorAll("[data-show]").forEach(b=>b.onclick=()=>{ switchRoom(b.dataset.show); renderStandard(); });
+  }
+  else if(state.view==="climate"){
+    const c=d.climate;
+    v.innerHTML=`<div class="workspace">
+      <div class="stagecol"><div id="envHost"></div></div>
+      <div class="sidecol">
+      <div class="card" style="display:grid;gap:16px;justify-items:center;text-align:center">
+        <h3>${state.rooms[state.activeRoom].name} climate</h3>
+        <svg viewBox="0 0 220 220" width="200" height="200" aria-hidden="true">
+          <circle cx="110" cy="110" r="92" fill="none" stroke="var(--elev)" stroke-width="16"/>
+          <circle cx="110" cy="110" r="92" fill="none" stroke="var(--accent)" stroke-width="16" stroke-linecap="round"
+            stroke-dasharray="${(2*Math.PI*92).toFixed(0)}" stroke-dashoffset="${(2*Math.PI*92*(1-(c.target-16)/14)).toFixed(0)}"
+            transform="rotate(-90 110 110)" style="transition:stroke-dashoffset .5s ease"/>
+          <text x="110" y="118" text-anchor="middle" font-size="46" font-weight="600" fill="var(--text)">${c.target}°</text>
+          <text x="110" y="146" text-anchor="middle" font-size="14" fill="var(--muted)">target</text>
+        </svg>
+        <div class="switchrow" style="justify-content:center">
+          <button class="btn" id="tDown" aria-label="Lower target temperature">− Cooler</button>
+          <button class="btn" id="tUp" aria-label="Raise target temperature">+ Warmer</button>
+        </div>
+        <p class="sub">Now ${c.current}° in the room. ${c.fan?"The fan is running to reach your target.":"The fan is idle — you are at your target."}</p>
+      </div>
+      </div>
+    </div>`;
+    mountScene(document.getElementById("envHost"));
+    const bump=n=>{ const prev=c.target; setTarget(c.target+n); log(`Temperature → ${c.target}°`); toast(`Target temperature ${c.target}°.`,()=>{setTarget(prev);renderStandard();}); renderStandard(); };
+    v.querySelector("#tUp").onclick=()=>bump(1);
+    v.querySelector("#tDown").onclick=()=>bump(-1);
+  }
+  else if(state.view==="security"){
+    v.innerHTML=`<div class="workspace">
+      <div class="stagecol"><div id="envHost"></div></div>
+      <div class="sidecol">
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr))">
+        <div class="card roomcard">
+          <h3>Main door</h3>
+          <div class="bigval">${d.lock.locked?"Locked":"Unlocked"}</div>
+          <span class="tag"><span class="dot ${d.lock.locked?"on":"off"}"></span>${d.lock.locked?"The deadbolt is engaged":"The deadbolt is open"}</span>
+          <div class="switchrow">
+            <button class="btn primary" id="doLock">Lock the door</button>
+            <button class="btn" id="doUnlock">Unlock</button>
+          </div>
+        </div>
+        <div class="card roomcard">
+          <h3>Away monitoring</h3>
+          <div class="bigval">${d.security.away?"On":"Off"}</div>
+          <p class="sub">Away turns every light off and keeps the door locked while nobody is home.</p>
+          <div class="switchrow"><button class="btn" id="awayToggle" aria-pressed="${d.security.away}">${d.security.away?"Turn off away":"Turn on away"}</button></div>
+        </div>
+      </div>
+      </div>
+    </div>`;
+    mountScene(document.getElementById("envHost"));
+    v.querySelector("#doLock").onclick=()=>{ if(d.lock.locked) return toast("The door is already locked."); setLock(true); log("Main door → Locked"); toast("Main door locked.",()=>{setLock(false);renderStandard();}); renderStandard(); };
+    v.querySelector("#doUnlock").onclick=()=>{ if(!d.lock.locked) return toast("The door is already unlocked."); setLock(false); log("Main door → Unlocked"); toast("Main door unlocked.",()=>{setLock(true);renderStandard();}); renderStandard(); };
+    v.querySelector("#awayToggle").onclick=()=>{ if(d.security.away){ d.security.away=false; log("Away monitoring → Off"); toast("Away monitoring off."); renderStandard(); } else openSceneConfirm("away"); };
+  }
+  else if(state.view==="scenes"){
+    if(state.runningScene){
+      const k=state.runningScene, s=SCENES[k], idx=state.sceneStepIndex;
+      v.innerHTML=`<div class="workspace">
+        <div class="stagecol"><div id="envHost"></div></div>
+        <div class="sidecol">
+        <div class="card">
+          <h3>${esc(s.name)}</h3><p class="sub">${esc(s.blurb)} Watch it apply on the left.</p>
+          <ul class="seqlist" style="margin-top:12px">${s.steps.map(([label],i)=>
+            `<li class="${i<=idx?"done":""}"><span class="dot ${i<=idx?"on":""}"></span>${esc(label)}</li>`).join("")}</ul>
+        </div>
+        </div>
+      </div>`;
+      mountScene(document.getElementById("envHost"));
+    } else {
+      v.innerHTML=`<div class="workspace">
+        <div class="stagecol"><div id="envHost"></div></div>
+        <div class="sidecol">
+        <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+          ${Object.entries(SCENES).map(([k,s])=>`
+            <button class="scenecard" data-scene="${k}">
+              <div class="preview">${scenePreview(k)}</div>
+              <div class="body"><h3>${s.name}</h3><div class="sub">${s.blurb}</div>
+              <div class="chips">${s.effects.map(e=>`<span class="chip">${esc(e)}</span>`).join("")}</div></div>
+            </button>`).join("")}
+        </div>
+        <p class="sub">A scene changes several devices at once. Confirm it, then watch it happen in the room view.</p>
+        </div>
+      </div>`;
+      mountScene(document.getElementById("envHost"));
+      v.querySelectorAll("[data-scene]").forEach(b=>b.onclick=()=>openSceneConfirm(b.dataset.scene));
+    }
+  }
+  else if(state.view==="activity"){
+    v.innerHTML=`<div class="workspace">
+      <div class="stagecol"><div id="envHost"></div></div>
+      <div class="sidecol">
+      <div class="card"><h3>Activity</h3><p class="sub">Everything ORBIT has done this session, in either mode.</p>
+      ${state.history.length? `<div class="log">${state.history.map(h=>`<div class="logrow"><time>${h.t}</time><span>${esc(h.text)}</span></div>`).join("")}</div>`
+        : `<div class="empty" style="margin-top:14px">Nothing yet. Change a light or run a scene and it will show up here.</div>`}
+      </div>
+      </div>
+    </div>`;
+    mountScene(document.getElementById("envHost"));
+  }
+  paintScene();
+}
+function scenePreview(k){
+  const bg={morning:"linear-gradient(160deg,#8FC6F2,#FDE68A)",movie:"linear-gradient(160deg,#1b2439,#4F46E5)",away:"linear-gradient(160deg,#0B1220,#334155)",study:"linear-gradient(160deg,#06B6D4,#4F46E5)"}[k];
+  return `<div style="position:absolute;inset:0;background:${bg}"></div>`;
+}
+
+/* toast + undo */
+let toastTimer=null;
+function toast(msg, undo){
+  const t=document.getElementById("toast");
+  t.innerHTML=`<span>${esc(msg)}</span>`;
+  if(undo){
+    const b=document.createElement("button");
+    b.className="btn ghost"; b.textContent="Undo";
+    b.onclick=()=>{ undo(); log("Undo"); t.classList.remove("show"); };
+    t.appendChild(b);
+  }
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove("show"), undo?6500:3800);
+}
+
+/* scene confirmation — compact in Standard Mode */
+function openSceneConfirm(key){
+  const s=SCENES[key];
+  openModal(`
+    <h2>${s.name}</h2>
+    <p class="sub">${s.blurb} This will change ${s.effects.length} things:</p>
+    <ul class="willdo">${s.effects.map(e=>`<li><span class="dot on"></span>${esc(e)}</li>`).join("")}</ul>
+    <div class="actions"><button class="btn ghost" data-close>Cancel</button><button class="btn primary" id="sceneGo">Run ${s.name}</button></div>`);
+  document.getElementById("sceneGo").onclick=()=>{ closeModal(); startSceneRun(key); };
+}
+function startSceneRun(key){
+  const s=SCENES[key];
+  state.runningScene=key;
+  state.sceneStepIndex=-1;
+  state.activeRoom="living";
+  paintScene();
+  renderStandard();
+  runSceneAnimated(key,
+    ()=>{ state.runningScene=null; state.sceneStepIndex=-1; toast(`${s.name} is ready.`); renderStandard(); },
+    (i)=>{ state.sceneStepIndex=i; if(state.view==="scenes") renderStandard(); else paintScene(); }
+  );
+}
+function runSceneAnimated(key, done, onStep){
+  const s=SCENES[key];
+  if(state.activeRoom!=="living"){ state.activeRoom="living"; }
+  let i=0;
+  const gap = state.settings.reducedMotion?420:900;
+  const tick=()=>{
+    if(i>=s.steps.length){ log(`${s.name} activated`); state.session.tasks++; done&&done(); return; }
+    const [label,fn]=s.steps[i];
+    fn(); onStep&&onStep(i,label); i++;
+    setTimeout(tick,gap);
+  };
+  tick();
+}
+
+/* modal helpers */
+function openModal(html){
+  const m=document.getElementById("modal");
+  document.getElementById("modalSheet").innerHTML=html;
+  m.hidden=false;
+  m.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeModal);
+  m.onclick=e=>{ if(e.target===m) closeModal(); };
+  const f=m.querySelector("button"); f&&f.focus();
+}
+function closeModal(){ document.getElementById("modal").hidden=true; }
+
+/* =========================================================
+   6. ASSIST MODE  — one-switch scanning + synchronised voice
+   ========================================================= */
+const A=()=>state.assist;
+let scanTimer=null;
+
+function assistScreen(){
+  const a=A(), d=state.devices;
+  const room = a.room ? state.rooms[a.room] : null;
+  switch(a.step){
+    case "welcome": return {kind:"hero", title:"ORBIT", line:"Technology That Adapts to You.",
+      speech:"Welcome to ORBIT. Press the switch to begin."};
+    case "ready": return {kind:"hero", title:"Assist Mode", line:"Scanning ready.",
+      speech:"Assist Mode is active. I will guide you through the controls.", auto:3200};
+    case "modules": return {kind:"choice", title:"Home", instruct:"Choose what you want to control.",
+      speech:"Home. Choose what you want to control.",
+      targets:[
+        {label:"Lighting", meta:`${lightsOnCount()} of 3 rooms on`, act:()=>{a.module="lighting";go("rooms");}},
+        {label:"Climate", meta:`Now ${d.climate.current}°`, act:()=>{a.module="climate";go("climate");}},
+        {label:"Security", meta:d.lock.locked?"Door locked":"Door unlocked", act:()=>{a.module="security";go("security");}},
+        {label:"Scenes", meta:"Change several devices at once", act:()=>{a.module="scenes";go("scenes");}},
+        {label:"Activity", meta:`${state.history.length} actions this session`, act:()=>{a.module="activity";go("activity");}}
+      ]};
+    case "rooms": return {kind:"choice", title:"Lighting", instruct:"Choose a room.", scene:true,
+      speech:"Lighting. Choose a room.",
+      targets:[
+        ...Object.entries(state.rooms).map(([k,r])=>({label:r.name, meta:r.on?`${r.brightness}% now`:"Off now",
+          roomKey:k, act:()=>{a.room=k; state.activeRoom=k; paintScene(); go("actions");}})),
+        {label:"Back", meta:"Return to Home", roomKey:state.activeRoom, act:()=>{a.module=null;go("modules");}}
+      ]};
+    case "actions": return {kind:"choice", title:room.name, instruct:"Choose an action.", scene:true,
+      speech:`${room.name} selected. Choose an action.`,
+      targets:[
+        {label:"Turn on", meta:"Full brightness", act:()=>{a.action="on"; a.preset="High"; go("review");}},
+        {label:"Turn off", meta:"Lights off", act:()=>{a.action="off"; a.preset=null; go("review");}},
+        {label:"Dim", meta:"Choose a brightness level", act:()=>{a.action="dim"; a.orig={on:room.on,b:room.brightness}; go("brightness");}},
+        {label:"Back", meta:"Choose another room", act:()=>{a.room=null;go("rooms");}}
+      ]};
+    case "brightness": return {kind:"choice", title:`${room.name} · Dim`, instruct:"Choose a brightness.", scene:true, preview:true,
+      speech:"Dim selected. Choose a brightness.",
+      targets:[
+        {label:"Low", meta:"20%", preview:20, act:()=>{a.preset="Low";go("review");}},
+        {label:"Medium", meta:"50%", preview:50, act:()=>{a.preset="Medium";go("review");}},
+        {label:"High", meta:"100%", preview:100, act:()=>{a.preset="High";go("review");}},
+        {label:"Back", meta:"Choose another action", act:()=>{ if(a.orig) setLight(a.room,a.orig.on,a.orig.b); a.preset=null; go("actions"); }}
+      ]};
+    case "review": {
+      const line = a.action==="off" ? `Turn ${room.name} lights off`
+        : `Set ${room.name} lights to ${a.preset.toLowerCase()} brightness`;
+      return {kind:"review", title:"Check this first", line, scene:true,
+        speech:`${line}. Confirm or edit.`,
+        targets:[
+          {label:"Confirm", meta:"Apply it now", act:()=>applyLighting()},
+          {label:"Edit", meta:"Change the brightness", act:()=>go(a.action==="off"?"actions":"brightness")}
+        ]};
+    }
+    case "processing": return {kind:"processing", title:"Applying your settings", speech:"Applying your settings."};
+    case "success": {
+      const line = a.action==="off" ? `${room.name} lights are now off`
+        : `${room.name} lights are now at ${a.preset.toLowerCase()} brightness`;
+      return {kind:"success", title:"Done", line, scene:true,
+        speech:`Done. ${line}.`,
+        targets:[
+          {label:"Continue", meta:"Back to Home", act:()=>{resetTask();go("modules");}},
+          {label:"View activity", meta:"Hear what changed", act:()=>go("activity")},
+          {label:"Finish", meta:"End the session", act:()=>go("standby")}
+        ]};
+    }
+    case "climate": return {kind:"choice", title:"Climate", instruct:`Target is ${d.climate.target} degrees. Choose a change.`, scene:true,
+      speech:`Climate. Target is ${d.climate.target} degrees. Choose a change.`,
+      targets:[
+        {label:"Warmer", meta:"One degree up", stay:true, act:()=>{setTarget(d.climate.target+1); log(`Temperature → ${d.climate.target}°`); renderAssist(true,"noscan"); speak(`Target ${d.climate.target} degrees.`, resumeScan);}},
+        {label:"Cooler", meta:"One degree down", stay:true, act:()=>{setTarget(d.climate.target-1); log(`Temperature → ${d.climate.target}°`); renderAssist(true,"noscan"); speak(`Target ${d.climate.target} degrees.`, resumeScan);}},
+        {label:"Done", meta:"Keep this temperature", act:()=>{toastVoice(`Temperature set to ${d.climate.target} degrees.`); go("modules");}},
+        {label:"Back", meta:"Return to Home", act:()=>go("modules")}
+      ]};
+    case "security": return {kind:"choice", title:"Security", instruct:`The main door is ${d.lock.locked?"locked":"unlocked"}. Choose an action.`, scene:true,
+      speech:`Security. The main door is ${d.lock.locked?"locked":"unlocked"}. Choose an action.`,
+      targets:[
+        {label:"Lock the door", meta:"Engage the deadbolt", act:()=>{ if(d.lock.locked){ assistError("The door is already locked."); return;} setLock(true); log("Main door → Locked"); toastVoice("The main door is locked."); go("modules"); }},
+        {label:"Unlock the door", meta:"Open the deadbolt", act:()=>{ if(!d.lock.locked){ assistError("The door is already unlocked."); return;} setLock(false); log("Main door → Unlocked"); toastVoice("The main door is unlocked."); go("modules"); }},
+        {label:"Back", meta:"Return to Home", act:()=>go("modules")}
+      ]};
+    case "scenes": return {kind:"choice", title:"Scenes", instruct:"A scene changes several devices together. Choose one.",
+      speech:"Scenes. A scene changes several devices together. Choose one.",
+      targets:[
+        ...Object.entries(SCENES).map(([k,s])=>({label:s.name, meta:`${s.effects.length} devices`, act:()=>{a.scene=k;go("sceneReview");}})),
+        {label:"Back", meta:"Return to Home", act:()=>go("modules")}
+      ]};
+    case "sceneReview": {
+      const s=SCENES[a.scene];
+      return {kind:"sceneReview", title:s.name, scene:s, 
+        speech:`${s.name}. This will change ${s.effects.length} devices. ${s.effects.join(". ")}. Confirm or cancel.`,
+        targets:[
+          {label:"Confirm", meta:`Run ${s.name}`, act:()=>runAssistScene()},
+          {label:"Cancel", meta:"Choose another scene", act:()=>{a.scene=null;go("scenes");}}
+        ]};
+    }
+    case "sceneRunning": return {kind:"sceneRunning", title:SCENES[a.scene].name, speech:`Applying ${SCENES[a.scene].name}.`};
+    case "sceneDone": return {kind:"success", title:"Done", line:`${SCENES[a.scene].name} is ready`, scene:true,
+      speech:`${SCENES[a.scene].name} is ready.`,
+      targets:[
+        {label:"Continue", meta:"Back to Home", act:()=>{resetTask();go("modules");}},
+        {label:"View activity", meta:"Hear what changed", act:()=>go("activity")},
+        {label:"Finish", meta:"End the session", act:()=>go("standby")}
+      ]};
+    case "activity": return {kind:"activity", title:"Activity", instruct:`${state.history.length} actions this session.`,
+      speech:"Activity.",
+      targets:[
+        {label:"Read the last three aloud", meta:"Hear recent changes", stay:true, act:()=>{
+          const items=state.history.slice(0,3);
+          speak(items.length? items.map(h=>`${h.t}. ${h.text}`).join(". ") : "Nothing has happened yet this session.", resumeScan);
+        }},
+        {label:"Back", meta:"Return to Home", act:()=>go("modules")}
+      ]};
+    case "error": return {kind:"error", title:"That action couldn't be completed", line:a.error,
+      speech:`That action couldn't be completed. ${a.error} You can try again or cancel.`,
+      targets:[
+        {label:"Try again", meta:"Go back one step", act:()=>go(a.errorBack||"modules")},
+        {label:"Cancel", meta:"Return to Home", act:()=>{resetTask();go("modules");}}
+      ]};
+    case "standby": return {kind:"hero", title:"Session complete", line:"Press the switch to start again.",
+      speech:"Session complete. Press the switch to start again."};
+  }
+}
+function go(step){
+  stopScan();
+  A().step=step;
+  if(step==="modules") { /* keep breadcrumb root */ }
+  renderAssist();
+}
+function resetTask(){ const a=A(); a.module=null;a.room=null;a.action=null;a.preset=null;a.scene=null; }
+function toastVoice(msg){ log(msg.replace(/\.$/,"")); }
+function assistError(msg){ const a=A(); a.error=msg; a.errorBack=a.step; go("error"); }
+
+function applyLighting(){
+  const a=A(), room=state.rooms[a.room];
+  go("processing");
+  setTimeout(()=>{
+    if(a.action==="off"){ setLight(a.room,false); log(`${room.name} lights → Off`); }
+    else{ const v=PRESET_VALUE[a.preset]; setLight(a.room,true,v); log(`${room.name} lights → ${a.preset} (${v}%)`); }
+    state.session.tasks++;
+    go("success");
+  }, state.settings.reducedMotion?900:2000);
+}
+function runAssistScene(){
+  const a=A();
+  go("sceneRunning");
+  const s=SCENES[a.scene];
+  const host=()=>document.getElementById("seq");
+  let i=0;
+  const gap=state.settings.reducedMotion?900:1600;
+  const tick=()=>{
+    const ul=host(); if(!ul) return;
+    ul.querySelectorAll("li").forEach((li,n)=>li.classList.toggle("done", n<i));
+    if(i>=s.steps.length){
+      log(`${s.name} activated`); state.session.tasks++;
+      setTimeout(()=>go("sceneDone"), 700); return;
+    }
+    const [label,fn]=s.steps[i];
+    const li=ul.children[i]; li && li.classList.add("active");
+    fn(); announce(label);
+    i++;
+    setTimeout(tick,gap);
+  };
+  setTimeout(tick, 900);
+}
+
+/* ---- render ---- */
+function renderAssist(keepIndex, silent){
+  const s=assistScreen(), a=A(), v=document.getElementById("assistView");
+  const crumbs=["Home"];
+  if(a.module==="lighting") crumbs.push("Lighting");
+  if(a.module==="climate") crumbs.push("Climate");
+  if(a.module==="security") crumbs.push("Security");
+  if(a.module==="scenes") crumbs.push("Scenes");
+  if(a.room) crumbs.push(state.rooms[a.room].name);
+  if(a.action==="dim") crumbs.push("Dim");
+  if(a.preset && a.action==="dim") crumbs.push(a.preset);
+  if(a.scene) crumbs.push(SCENES[a.scene].name);
+
+  const chrome = s.kind==="hero" ? "" : `
+    <div class="crumb" aria-label="You are here">${crumbs.map((c,i)=>`${i?'<span aria-hidden="true">›</span>':''}${i===crumbs.length-1?`<b>${esc(c)}</b>`:esc(c)}`).join("")}</div>
+    <div class="assisthead"><div class="title">${esc(s.title)}</div></div>
+    ${s.instruct?`<p class="instruct">${esc(s.instruct)}</p>`:""}`;
+
+  let body="";
+  if(s.kind==="hero"){
+    body=`<div class="hero">
+      <svg width="86" height="86" viewBox="0 0 48 48" aria-hidden="true" class="pulse">
+        <circle cx="24" cy="24" r="6" fill="var(--accent)"/>
+        <ellipse cx="24" cy="24" rx="19" ry="10" fill="none" stroke="var(--primary)" stroke-width="2.6" transform="rotate(-24 24 24)"/>
+        <circle cx="40" cy="17" r="3.4" fill="var(--violet)"/><circle cx="8" cy="31" r="3.4" fill="var(--primary)"/>
+      </svg>
+      <h1>${esc(s.title)}</h1><p>${esc(s.line)}</p>
+      ${a.step==="ready"?'<div class="press">Scanning ready</div>':`<div class="press pulse">Press <kbd>${keyName()}</kbd> to ${a.step==="standby"?"start again":"begin"}</div>`}
+    </div>`;
+  } else if(s.kind==="processing"){
+    body=`<div class="review" style="text-align:center"><div class="spinner"></div>
+      <div class="line" style="margin-top:12px">Applying your settings</div>
+      <p class="instruct">Hold on — nothing to press right now.</p></div>
+      <div id="envHost"></div>`;
+  } else if(s.kind==="sceneRunning"){
+    const sc=SCENES[a.scene];
+    body=`<div id="envHost"></div>
+      <ul class="seqlist" id="seq" style="margin-top:14px">${sc.steps.map(([l])=>`<li><span class="dot"></span>${esc(l)}</li>`).join("")}</ul>`;
+  } else if(s.kind==="sceneReview"){
+    body=`<div class="review">
+        <div class="line">This will change ${s.scene.effects.length} devices</div>
+        <ul class="willdo">${s.scene.effects.map(e=>`<li><span class="dot on"></span>${esc(e)}</li>`).join("")}</ul>
+      </div>`;
+  } else if(s.kind==="review"){
+    body=`<div id="envHost"></div><div class="review" style="margin-top:14px"><div class="line">${esc(s.line)}</div>
+      <p class="instruct">Confirm to apply it, or edit to change your choice.</p></div>`;
+  } else if(s.kind==="success"){
+    body=`<div id="envHost"></div>
+      <div class="review" style="margin-top:14px;text-align:center">
+        <div class="donemark"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="3" stroke-linecap="round"><path d="M4 12.5 9.5 18 20 6.5"/></svg></div>
+        <div class="line" style="margin-top:10px">${esc(s.line)}</div></div>`;
+  } else if(s.kind==="activity"){
+    body=`<div class="review">${state.history.length
+      ? `<div class="log">${state.history.slice(0,8).map(h=>`<div class="logrow"><time>${h.t}</time><span>${esc(h.text)}</span></div>`).join("")}</div>`
+      : `<div class="empty">Nothing yet this session.</div>`}</div>`;
+  } else if(s.kind==="error"){
+    body=`<div class="review" style="border-color:var(--error)"><div class="line">${esc(s.line)}</div>
+      <p class="instruct">You can try again or cancel. Nothing has changed.</p></div>`;
+  } else if(s.scene){
+    body=`<div id="envHost"></div>`;
+  }
+
+  const targetsHTML = s.targets ? `
+    <div class="scanbar" aria-hidden="true"><i id="scanFill"></i></div>
+    <div class="targets" role="group" aria-label="Options">
+      ${s.targets.map((t,i)=>`<button class="target" data-i="${i}"><span class="glyph">${glyph(t.label)}</span><span>${esc(t.label)}<span class="meta">${esc(t.meta||"")}</span></span></button>`).join("")}
+    </div>` : "";
+
+  const controlsHTML = s.targets ? `
+    <div class="controlrow" role="group" aria-label="Scanning controls">
+      <button class="control" data-c="repeat">Repeat<span class="meta sub">say it again</span></button>
+      <button class="control" data-c="pause">${a.paused?"Resume":"Pause"}<span class="meta sub">${a.paused?"continue scanning":"stop scanning"}</span></button>
+      <button class="control" data-c="cancel">Cancel<span class="meta sub">back to Home</span></button>
+      <button class="control" data-c="exit">Standard Mode<span class="meta sub">switch interaction</span></button>
+    </div>` : "";
+
+  const hasScene = body.includes('<div id="envHost"></div>');
+  const bodyRest = hasScene ? body.replace('<div id="envHost"></div>', '') : body;
+  v.classList.toggle("split", hasScene);
+
+  const captionHTML = `
+    <div class="caption" aria-live="polite"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span id="capText">…</span>
+      <span class="sub" style="margin-left:auto;white-space:nowrap">Switch: ${keyName()}</span>
+      <button class="btn ghost" id="exitAssist" style="padding:7px 12px;font-size:.82rem">Standard Mode</button>
+      <button class="btn ghost" id="assistSettings" style="padding:7px 12px;font-size:.82rem">Settings</button></div>`;
+
+  v.innerHTML = hasScene ? `
+    ${captionHTML}
+    <div class="assistSplit">
+      <div class="assistScene"><div id="envHost"></div></div>
+      <div class="assistMain">${chrome}${bodyRest}${targetsHTML}${controlsHTML}</div>
+    </div>` : `
+    ${captionHTML}
+    ${chrome}${body}${targetsHTML}${controlsHTML}`;
+
+  const host=document.getElementById("envHost");
+  if(host){ mountScene(host); paintScene(); }
+
+  // clicking a target also works (assist mode still accepts touch/mouse)
+  v.querySelectorAll(".target").forEach(b=>b.onclick=()=>{ scanIndexTo(+b.dataset.i); select(); });
+  v.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>control(b.dataset.c));
+  v.querySelector("#exitAssist").onclick=()=>setMode("standard");
+  v.querySelector("#assistSettings").onclick=()=>{ stopScan(); openSettings(); };
+
+  // speak the screen, then start scanning in sync with the voice
+  const targets=currentTargets();
+  if(!keepIndex) a.scanIndex=0;
+  if(silent){
+    if(silent!=="noscan" && targets.length && !a.paused) startScan();
+  } else if(s.speech){
+    remember(s.speech);
+    speak(s.speech, ()=>{ if(targets.length && !a.paused && A().step===a.step) startScan(); });
+  } else if(targets.length && !a.paused){ startScan(); }
+
+  if(s.auto){ setTimeout(()=>{ if(A().step==="ready") go("modules"); }, s.auto); }
+  if(targets.length) highlight();
+}
+function glyph(label){
+  const c="none",st="currentColor";
+  const map={
+    "Lighting":'<circle cx="12" cy="10" r="5"/><path d="M9 19h6M10 22h4"/>',
+    "Climate":'<path d="M12 14V5a2 2 0 1 1 4 0v9"/><circle cx="14" cy="17" r="3.5"/>',
+    "Security":'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+    "Scenes":'<path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="3.4"/>',
+    "Activity":'<path d="M3 12h4l3 7 4-14 3 7h4"/>',
+    "Back":'<path d="M15 5l-7 7 7 7"/>',"Cancel":'<path d="M6 6l12 12M18 6 6 18"/>',
+    "Confirm":'<path d="M4 12.5 9.5 18 20 6.5"/>',"Edit":'<path d="M4 20h4L20 8l-4-4L4 16z"/>',
+    "Continue":'<path d="M9 5l7 7-7 7"/>',"Finish":'<path d="M4 12.5 9.5 18 20 6.5"/>',
+    "Turn on":'<circle cx="12" cy="12" r="7"/><path d="M12 5v6"/>',"Turn off":'<circle cx="12" cy="12" r="7"/>',
+    "Dim":'<circle cx="12" cy="12" r="6"/><path d="M12 6a6 6 0 0 0 0 12z" fill="currentColor"/>',
+    "Low":'<circle cx="12" cy="12" r="3"/>',"Medium":'<circle cx="12" cy="12" r="5"/>',"High":'<circle cx="12" cy="12" r="7"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/>',
+    "Warmer":'<path d="M12 19V5M6 11l6-6 6 6"/>',"Cooler":'<path d="M12 5v14M6 13l6 6 6-6"/>',
+    "Lock the door":'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+    "Unlock the door":'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0"/>'
+  };
+  const p = map[label] || '<circle cx="12" cy="12" r="6"/>';
+  return `<svg width="22" height="22" viewBox="0 0 24 24" fill="${c}" stroke="${st}" stroke-width="2" stroke-linecap="round" aria-hidden="true">${p}</svg>`;
+}
+
+/* ---- scanning engine ---- */
+function currentTargets(){ const s=assistScreen(); return s.targets||[]; }
+function allNodes(){
+  const v=document.getElementById("assistView");
+  return [...v.querySelectorAll(".target")];
+}
+function highlight(){
+  const a=A(), nodes=allNodes();
+  nodes.forEach((n,i)=>n.classList.toggle("scanning", i===a.scanIndex));
+  const fill=document.getElementById("scanFill");
+  if(fill){ fill.style.animation="none"; void fill.offsetWidth; fill.style.animation=""; }
+  const node=nodes[a.scanIndex];
+  if(node) node.scrollIntoView({block:"nearest", behavior: state.settings.reducedMotion?"auto":"smooth"});
+}
+function announceTarget(){
+  const t=currentTargets()[A().scanIndex];
+  if(!t) return;
+  const text = state.settings.verbose
+    ? `${t.label}. ${t.meta||""} Press the switch to select.`
+    : t.label;
+  remember(`${t.label}. Press the switch to select.`);
+  speak(text);
+  if(t.preview!=null && A().room){ // brightness preview in the actual room
+    setLight(A().room, true, t.preview);
+  }
+  if(t.roomKey && t.roomKey!==state.activeRoom){ // live room preview while scanning "choose a room"
+    state.activeRoom=t.roomKey;
+    paintScene();
+  }
+}
+function startScan(){
+  stopScan();
+  const a=A();
+  if(a.paused || !currentTargets().length) return;
+  a.scanning=true;
+  highlight(); announceTarget();
+  scanTimer=setInterval(()=>{
+    const list=currentTargets();
+    if(!list.length) return stopScan();
+    a.scanIndex=(a.scanIndex+1)%list.length;
+    highlight(); announceTarget();
+  }, state.settings.scanSpeed);
+}
+function resumeScan(){ if(!A().paused && currentTargets().length) startScan(); }
+function stopScan(){ clearInterval(scanTimer); scanTimer=null; A().scanning=false; }
+function scanIndexTo(i){ A().scanIndex=i; highlight(); }
+function select(){
+  const a=A(), list=currentTargets(), t=list[a.scanIndex];
+  if(!t) return;
+  stopScan();
+  const node=allNodes()[a.scanIndex];
+  if(node){ node.classList.add("picked"); }
+  if(t.stay){ t.act(); return; }
+  speak(`${t.label} selected.`, ()=>t.act());
+}
+function control(kind){
+  const a=A();
+  if(kind==="repeat"){ stopScan(); speak(lastSpoken || "Choose an option.", ()=>{ if(!a.paused) startScan(); }); }
+  if(kind==="pause"){
+    a.paused=!a.paused;
+    if(a.paused){ stopScan(); renderAssist(true,true); speak("Scanning paused. Press the switch to resume."); }
+    else { renderAssist(true,"noscan"); speak("Scanning resumed.", startScan); }
+  }
+  if(kind==="cancel"){ resetTask(); go("modules"); }
+  if(kind==="exit"){ setMode("standard"); }
+}
+
+/* =========================================================
+   7. INPUT
+   ========================================================= */
+function keyName(){
+  const k=state.settings.switchKey;
+  return k===" " ? "Space" : k==="Enter" ? "Enter" : k.toUpperCase();
+}
+let capturingKey=false;
+document.addEventListener("keydown", e=>{
+  if(capturingKey){
+    e.preventDefault();
+    if(e.key==="Escape"){ capturingKey=false; renderSettings(); return; }
+    state.settings.switchKey = e.key===" " ? " " : e.key;
+    capturingKey=false; saveSettings(); renderSettings(); return;
+  }
+  if(e.key==="Escape"){
+    if(!document.getElementById("modal").hidden) return closeModal();
+    if(!document.getElementById("settings").hidden) return closeSettings();
+    if(state.mode==="assist"){ control("pause"); }
+    return;
+  }
+  if(state.mode!=="assist") return;
+  if(!document.getElementById("settings").hidden || !document.getElementById("modal").hidden) return;
+  const sw=state.settings.switchKey;
+  const hit = e.key===sw || (sw===" " && e.code==="Space") || e.key==="Enter";
+  if(!hit) return;
+  e.preventDefault();
+  const a=A();
+  if(a.step==="welcome"){ go("ready"); return; }
+  if(a.step==="standby"){ resetTask(); go("welcome"); return; }
+  if(a.step==="ready"){ go("modules"); return; }
+  if(a.step==="processing"||a.step==="sceneRunning") return;
+  if(a.paused){ a.paused=false; renderAssist(true,"noscan"); speak("Scanning resumed.", startScan); return; }
+  select();
+}, {passive:false});
+
+/* =========================================================
+   8. MODE, THEME, SETTINGS, HELP
+   ========================================================= */
+function setMode(m){
+  stopScan(); stopVoice();
+  state.mode=m;
+  document.body.dataset.mode=m;
+  document.getElementById("mStd").setAttribute("aria-pressed", m==="standard");
+  document.getElementById("mAsst").setAttribute("aria-pressed", m==="assist");
+  if(m==="assist"){
+    state.profile="assist";
+    if(!state.settings.voiceEnabled){ state.settings.voiceEnabled=true; saveSettings(); }
+    const a=A();
+    if(a.step==="processing"||a.step==="sceneRunning") a.step="modules";
+    if(a.step==="welcome"||!a.step) a.step="welcome";
+    renderAssist();
+  } else {
+    renderStandard();
+    mountScene(document.getElementById("envHost"));
+  }
+  applySettings();
+}
+function applySettings(){
+  const s=state.settings, r=document.documentElement;
+  r.dataset.theme=s.theme;
+  r.dataset.contrast=s.contrast;
+  r.dataset.motion=s.reducedMotion?"reduced":"normal";
+  r.style.setProperty("--text-scale", s.textScale);
+  r.style.setProperty("--focus-mult", s.focusStrength);
+  r.style.setProperty("--scan-ms", s.scanSpeed+"ms");
+  const vs=document.getElementById("voiceState"), vd=document.getElementById("voiceDot");
+  vs.textContent = s.voiceEnabled ? (tts?"on":"unavailable") : "off";
+  vd.className = "dot " + (s.voiceEnabled && tts ? "on":"off");
+  saveSettings();
+}
+function renderSettings(){
+  const s=state.settings;
+  const seg=(name,opts,cur)=>`<div class="seg">${opts.map(([v,l])=>`<button data-set="${name}" data-val="${v}" aria-pressed="${String(cur)===String(v)}">${l}</button>`).join("")}</div>`;
+  document.getElementById("settingsSheet").innerHTML=`
+    <h2>Accessibility</h2>
+    <p class="sub">Every setting here changes how ORBIT behaves right away.</p>
+
+    <div class="setrow"><label>Interaction</label>
+      ${seg("mode",[["standard","Standard"],["assist","Assist"]],state.mode)}
+      <span class="sub">Assist replaces direct controls with one-switch scanning and spoken guidance.</span></div>
+
+    <div class="setrow"><label>Profile</label>
+      ${seg("profile",[["default","Default user"],["assist","Assist user"],["custom","Custom"]],state.profile)}
+      <span class="sub">Profiles preload a set of preferences. Changing anything below makes it custom.</span></div>
+
+    <div class="setrow"><label>Scanning speed</label>
+      ${seg("scanSpeed",[[2400,"Slow"],[1500,"Medium"],[900,"Fast"]],s.scanSpeed)}
+      <input type="range" min="600" max="3000" step="100" value="${s.scanSpeed}" data-range="scanSpeed" aria-label="Custom scanning speed in milliseconds">
+      <span class="sub">${s.scanSpeed} milliseconds on each option.</span></div>
+
+    <div class="setrow"><label>Voice guidance</label>
+      ${seg("voiceEnabled",[[true,"On"],[false,"Off"]],s.voiceEnabled)}
+      ${tts?"":'<span class="sub">This browser has no speech engine, so ORBIT shows every announcement as text instead.</span>'}
+      <label class="sub">Speed</label>
+      <input type="range" min="0.6" max="1.6" step="0.1" value="${s.voiceRate}" data-range="voiceRate" aria-label="Voice speed">
+      <label class="sub">Volume</label>
+      <input type="range" min="0" max="1" step="0.1" value="${s.voiceVolume}" data-range="voiceVolume" aria-label="Voice volume">
+      ${seg("verbose",[[false,"Short announcements"],[true,"Detailed announcements"]],s.verbose)}</div>
+
+    <div class="setrow"><label>Text size</label>
+      ${seg("textScale",[[1,"Normal"],[1.15,"Large"],[1.3,"Larger"]],s.textScale)}</div>
+
+    <div class="setrow"><label>Contrast and focus</label>
+      ${seg("contrast",[["normal","Normal contrast"],["high","High contrast"]],s.contrast)}
+      ${seg("focusStrength",[[1,"Standard focus"],[2,"Strong focus"],[3,"Strongest focus"]],s.focusStrength)}</div>
+
+    <div class="setrow"><label>Motion</label>
+      ${seg("reducedMotion",[[false,"Normal motion"],[true,"Reduced motion"]],s.reducedMotion)}
+      <span class="sub">Reduced motion keeps the changes you need to see — lights, locks, curtains — and drops the decoration.</span></div>
+
+    <div class="setrow"><label>Switch key</label>
+      <div class="seg"><button id="captureKey">${capturingKey?"Press any key…":`Currently ${keyName()} — change`}</button></div>
+      <span class="sub">In Standard Mode you can still use Tab, Enter, Space and Escape as usual.</span></div>
+
+    <div class="actions"><button class="btn primary" data-close>Done</button></div>`;
+  const sh=document.getElementById("settingsSheet");
+  sh.querySelectorAll("[data-set]").forEach(b=>b.onclick=()=>{
+    const k=b.dataset.set; let val=b.dataset.val;
+    if(val==="true")val=true; else if(val==="false")val=false; else if(!isNaN(+val)&&k!=="mode"&&k!=="profile"&&k!=="contrast")val=+val;
+    if(k==="mode"){ setMode(val); renderSettings(); return; }
+    if(k==="profile"){
+      state.profile=val;
+      if(val==="assist"){ Object.assign(s,{voiceEnabled:true,scanSpeed:1800,textScale:1.15,focusStrength:2}); setMode("assist"); }
+      if(val==="default"){ Object.assign(s,{voiceEnabled:false,scanSpeed:1500,textScale:1,focusStrength:1}); setMode("standard"); }
+      applySettings(); renderSettings(); return;
+    }
+    s[k]=val; state.profile="custom";
+    applySettings();
+    if(state.mode==="assist"){ stopScan(); renderAssist(true,true); }
+    renderSettings();
+  });
+  sh.querySelectorAll("[data-range]").forEach(r=>r.oninput=()=>{
+    s[r.dataset.range]= +r.value; state.profile="custom"; applySettings();
+    if(r.dataset.range==="scanSpeed" && state.mode==="assist" && A().scanning) startScan();
+  });
+  sh.querySelector("#captureKey").onclick=()=>{ capturingKey=true; renderSettings(); };
+  sh.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeSettings);
+}
+function openSettings(){ document.getElementById("settings").hidden=false; renderSettings(); }
+function closeSettings(){ document.getElementById("settings").hidden=true; if(state.mode==="assist"){ renderAssist(true,true); } }
+
+function helpText(){
+  if(state.mode==="assist") return "Assist Mode scans through the options one at a time. Press the switch when the option you want is highlighted. Repeat, Pause and Cancel are in the scan too.";
+  if(state.view==="lighting") return "Drag a brightness slider or pick Low, Medium or High. The room above changes as you move.";
+  if(state.view==="scenes") return "A scene changes several devices together. You will see the full list before anything happens.";
+  if(state.view==="climate") return "Set a target temperature. The room takes a moment to reach it, and the fan shows while it does.";
+  if(state.view==="security") return "Lock or unlock the main door. The door in the room view shows the real state.";
+  if(state.view==="activity") return "Everything ORBIT has done this session, from either mode.";
+  return "Tap anything in the room to control it. Switch to Assist Mode to operate ORBIT with a single switch.";
+}
+function openHelp(){
+  openModal(`<h2>Help</h2><p>${esc(helpText())}</p>
+    <p class="sub">ORBIT is one home with two ways in. Anything you change in one mode is already true in the other.</p>
+    <div class="actions"><button class="btn primary" data-close>Got it</button></div>`);
+}
+
+/* =========================================================
+   9. BOOT
+   ========================================================= */
+loadSettings();
+if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) state.settings.reducedMotion=true;
+try{
+  if(window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches && !localStorage.getItem("orbit.settings")) state.settings.theme="light";
+}catch(e){}
+document.getElementById("mStd").onclick=()=>setMode("standard");
+document.getElementById("mAsst").onclick=()=>setMode("assist");
+document.getElementById("btnTheme").onclick=()=>{ state.settings.theme = state.settings.theme==="dark"?"light":"dark"; applySettings(); };
+document.getElementById("btnSettings").onclick=openSettings;
+document.getElementById("btnHelp").onclick=openHelp;
+
+applySettings();
+renderStandard();
+mountScene(document.getElementById("envHost"));
+wireHotspots();
+paintScene();
+log("Session started");
+
+/* ---- splash / grand reveal, runs on every load and refresh ---- */
+(function playIntro(){
+  const reduced = state.settings.reducedMotion ||
+    (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  const splash = document.getElementById("splash");
+  const home = document.getElementById("standard");
+  const introDelay = reduced ? 50 : 2200;
+  setTimeout(()=>{
+    splash.classList.add("splash-out");
+    home.classList.add("revealed");
+    setTimeout(()=>{ splash.hidden = true; }, reduced ? 60 : 850);
+  }, introDelay);
+})();
+</script>
+</body>
+</html>
