@@ -254,12 +254,31 @@ body[data-mode="assist"] #assist{display:block}
 body[data-mode="assist"] .roomSwitch{display:none}
 .assistwrap{max-width:1080px;margin:0 auto;padding:16px 18px 40px;min-height:100dvh;display:flex;flex-direction:column;gap:16px}
 .assistwrap.split{max-width:1360px}
-.assistSplit{display:grid;grid-template-columns:minmax(300px,42%) 1fr;gap:22px;align-items:start}
-.assistScene{position:sticky;top:20px}
-.assistMain{display:flex;flex-direction:column;gap:16px;min-width:0}
+.assistSplit{display:grid;grid-template-columns:minmax(320px,44%) 1fr;gap:22px;align-items:start}
+.assistScene{position:sticky;top:16px;display:flex;flex-direction:column;gap:12px}
+.assistMain{display:flex;flex-direction:column;gap:14px;min-width:0}
+/* widgets re-flowed for the narrower column beside the room */
+.assistSplit .targets{grid-template-columns:1fr;gap:10px}
+.assistSplit .target{min-height:70px;padding:14px 18px;font-size:clamp(1rem,1.6vw,1.2rem)}
+.assistSplit .controlrow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.assistSplit .control{min-height:62px;flex:none;font-size:.95rem}
+.assistSplit .control .meta{display:none}
+.assistSplit .review{padding:20px}
+.assistSplit .assisthead .title{font-size:clamp(1.5rem,2.6vw,2rem)}
+.assistSplit .hero{min-height:0}
+.assistStatus{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.assistStatus .chip{display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);
+  border-radius:14px;background:var(--surface);font-size:.92rem;transition:border-color var(--dur-2),background var(--dur-2)}
+.assistStatus .chip .dot{width:10px;height:10px;border-radius:50%;background:var(--muted);flex:none}
+.assistStatus .chip.on .dot{background:var(--success);box-shadow:0 0 0 3px color-mix(in srgb,var(--success) 28%,transparent)}
+.assistStatus .chip.warn .dot{background:var(--warn)}
+.assistStatus .chip small{display:block;color:var(--muted);font-size:.74rem;line-height:1.2}
+.assistStatus .chip b{font-weight:600}
+.assistStatus .chip.flash{border-color:var(--accent);background:var(--elev)}
 @media(max-width:980px){
   .assistSplit{grid-template-columns:1fr}
   .assistScene{position:static}
+  .assistSplit .controlrow{grid-template-columns:repeat(2,1fr)}
 }
 .crumb{display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:1rem}
 .crumb b{color:var(--text)}
@@ -514,6 +533,44 @@ const SCENES = {
     apply(){ setLight("living",true,100); setCurtains(true); setTV(false); setTarget(24); },
     steps:[["Lights at full brightness",()=>setLight("living",true,100)],["Curtains opening",()=>setCurtains(true)],["Television off",()=>setTV(false)],["Temperature set to 24 degrees",()=>setTarget(24)]]}
 };
+
+/* ---- more scenes. A step is [spoken label, action, optional room to show while it runs] ---- */
+(function addScenes(){
+  const S=(name,blurb,effects,steps)=>({name,blurb,effects,steps,apply(){ steps.forEach(([,fn])=>fn()); }});
+  SCENES.bedtime=S("Bedtime","Wind down, lock up, soft light.",
+    ["Turn off the TV","Living Room and Kitchen lights off","Close the curtains","Lock the main door","Bedroom night light at 15%","Set temperature to 21°"],
+    [["Television off",()=>setTV(false),"living"],
+     ["Lights going off",()=>{setLight("living",false);setLight("kitchen",false);}],
+     ["Curtains closing",()=>setCurtains(false)],
+     ["Door locked",()=>setLock(true)],
+     ["Bedroom night light on",()=>setLight("bedroom",true,15),"bedroom"],
+     ["Temperature set to 21 degrees",()=>setTarget(21)]]);
+  SCENES.dinner=S("Dinner Time","Bright kitchen, warm living room.",
+    ["Kitchen lights to 100%","Living Room lights to 40%","Turn off the TV","Set temperature to 23°"],
+    [["Kitchen lights at full brightness",()=>setLight("kitchen",true,100),"kitchen"],
+     ["Living room lights softening",()=>setLight("living",true,40),"living"],
+     ["Television off",()=>setTV(false)],
+     ["Temperature set to 23 degrees",()=>setTarget(23)]]);
+  SCENES.relax=S("Relax","Soft light and a quiet evening.",
+    ["Living Room lights to 35%","Kitchen lights off","Close the curtains","Set temperature to 24°"],
+    [["Living room lights softening",()=>setLight("living",true,35),"living"],
+     ["Kitchen lights off",()=>setLight("kitchen",false)],
+     ["Curtains closing",()=>setCurtains(false)],
+     ["Temperature set to 24 degrees",()=>setTarget(24)]]);
+  SCENES.homecoming=S("Coming Home","Unlock, light up, open up.",
+    ["Unlock the main door","Turn off away monitoring","Living Room and Kitchen lights to 80%","Open the curtains","Set temperature to 24°"],
+    [["Door unlocked",()=>setLock(false),"living"],
+     ["Lights coming on",()=>{setLight("living",true,80);setLight("kitchen",true,80);}],
+     ["Curtains opening",()=>setCurtains(true)],
+     ["Temperature set to 24 degrees",()=>setTarget(24)]]);
+  SCENES.saver=S("Energy Saver","Use less power without leaving.",
+    ["Bedroom and Kitchen lights off","Living Room lights to 40%","Turn off the TV","Set temperature to 26°"],
+    [["Bedroom lights off",()=>setLight("bedroom",false),"bedroom"],
+     ["Kitchen lights off",()=>setLight("kitchen",false),"kitchen"],
+     ["Living room lights dimmed",()=>setLight("living",true,40),"living"],
+     ["Television off",()=>setTV(false)],
+     ["Temperature set to 26 degrees",()=>setTarget(26)]]);
+})();
 
 /* ---- persistence (guarded: storage can be unavailable) ---- */
 function saveSettings(){
@@ -816,6 +873,26 @@ function paintScene(){
   const wr=document.getElementById("whereRoom"); if(wr) wr.textContent=r.name;
 
   renderRoomSwitch();
+  paintAssistStatus();
+}
+const _lastChip={};
+function paintAssistStatus(){
+  const el=document.getElementById("assistStatus");
+  if(!el) return;
+  const d=state.devices, r=state.rooms[state.activeRoom];
+  const chips=[
+    ["lights",r.on?"on":"",`${r.name} lights`,r.on?`${r.brightness}%`:"Off"],
+    ["temp",d.climate.fan?"warn":"on","Temperature",`${d.climate.current}°${d.climate.fan?` → ${d.climate.target}°`:""}`],
+    ["door",d.lock.locked?"on":"warn","Main door",d.lock.locked?"Locked":"Unlocked"],
+    ["tv",d.tv.on?"on":"","Television",d.tv.on?"On":"Off"],
+    ["curtains",d.curtains.open?"on":"","Curtains",d.curtains.open?"Open":"Closed"],
+    ["away",d.security.away?"on":"","Away mode",d.security.away?"On":"Off"]
+  ];
+  el.innerHTML=chips.map(([k,cls,label,val])=>{
+    const changed=_lastChip[k]!==undefined && _lastChip[k]!==val && !state.settings.reducedMotion;
+    _lastChip[k]=val;
+    return `<div class="chip ${cls}${changed?" flash":""}"><span class="dot"></span><span><small>${esc(label)}</small><b>${esc(val)}</b></span></div>`;
+  }).join("");
 }
 
 /* room switcher — lets any view visualize (and switch to) any room */
@@ -1039,7 +1116,10 @@ function renderStandard(){
   paintScene();
 }
 function scenePreview(k){
-  const bg={morning:"linear-gradient(160deg,#8FC6F2,#FDE68A)",movie:"linear-gradient(160deg,#1b2439,#4F46E5)",away:"linear-gradient(160deg,#0B1220,#334155)",study:"linear-gradient(160deg,#06B6D4,#4F46E5)"}[k];
+  const bg={morning:"linear-gradient(160deg,#8FC6F2,#FDE68A)",movie:"linear-gradient(160deg,#1b2439,#4F46E5)",away:"linear-gradient(160deg,#0B1220,#334155)",study:"linear-gradient(160deg,#06B6D4,#4F46E5)",
+    bedtime:"linear-gradient(160deg,#1E1B4B,#6D28D9)",dinner:"linear-gradient(160deg,#F59E0B,#B45309)",
+    relax:"linear-gradient(160deg,#EC6FA0,#7C3AED)",homecoming:"linear-gradient(160deg,#34D399,#06B6D4)",
+    saver:"linear-gradient(160deg,#166534,#34D399)"}[k]||"linear-gradient(160deg,#4F46E5,#06B6D4)";
   return `<div style="position:absolute;inset:0;background:${bg}"></div>`;
 }
 
@@ -1083,13 +1163,15 @@ function startSceneRun(key){
 }
 function runSceneAnimated(key, done, onStep){
   const s=SCENES[key];
-  if(state.activeRoom!=="living"){ state.activeRoom="living"; }
+  state.activeRoom = s.steps[0][2] || "living";
   let i=0;
   const gap = state.settings.reducedMotion?420:900;
   const tick=()=>{
     if(i>=s.steps.length){ log(`${s.name} activated`); state.session.tasks++; done&&done(); return; }
-    const [label,fn]=s.steps[i];
-    fn(); onStep&&onStep(i,label); i++;
+    const [label,fn,room]=s.steps[i];
+    if(room && state.rooms[room]) state.activeRoom=room;
+    fn(); if(room) paintScene();
+    onStep&&onStep(i,label); i++;
     setTimeout(tick,gap);
   };
   tick();
@@ -1126,7 +1208,7 @@ function assistScreen(){
         {label:"Lighting", meta:`${lightsOnCount()} of 3 rooms on`, act:()=>{a.module="lighting";go("rooms");}},
         {label:"Climate", meta:`Now ${d.climate.current}°`, act:()=>{a.module="climate";go("climate");}},
         {label:"Security", meta:d.lock.locked?"Door locked":"Door unlocked", act:()=>{a.module="security";go("security");}},
-        {label:"Scenes", meta:"Change several devices at once", act:()=>{a.module="scenes";go("scenes");}},
+        {label:"Scenes", meta:"Change several devices at once", act:()=>{a.module="scenes";a.scenePage=0;go("scenes");}},
         {label:"Activity", meta:`${state.history.length} actions this session`, act:()=>{a.module="activity";go("activity");}}
       ]};
     case "rooms": return {kind:"choice", title:"Lighting", instruct:"Choose a room.", scene:true,
@@ -1189,12 +1271,16 @@ function assistScreen(){
         {label:"Unlock the door", meta:"Open the deadbolt", act:()=>{ if(!d.lock.locked){ assistError("The door is already unlocked."); return;} setLock(false); log("Main door → Unlocked"); toastVoice("The main door is unlocked."); go("modules"); }},
         {label:"Back", meta:"Return to Home", act:()=>go("modules")}
       ]};
-    case "scenes": return {kind:"choice", title:"Scenes", instruct:"A scene changes several devices together. Choose one.",
-      speech:"Scenes. A scene changes several devices together. Choose one.",
-      targets:[
-        ...Object.entries(SCENES).map(([k,s])=>({label:s.name, meta:`${s.effects.length} devices`, act:()=>{a.scene=k;go("sceneReview");}})),
-        {label:"Back", meta:"Return to Home", act:()=>go("modules")}
-      ]};
+    case "scenes": {
+      const per=4, keys=Object.keys(SCENES), pages=Math.ceil(keys.length/per);
+      const pg=(a.scenePage||0)%pages;
+      const list=keys.slice(pg*per,pg*per+per).map(k=>({label:SCENES[k].name, meta:`${SCENES[k].effects.length} devices`, act:()=>{a.scene=k;go("sceneReview");}}));
+      if(pages>1) list.push({label:"More scenes", meta:`Page ${pg+1} of ${pages}`, act:()=>{a.scenePage=(pg+1)%pages; go("scenes");}});
+      list.push({label:"Back", meta:"Return to Home", act:()=>{a.scenePage=0; go("modules");}});
+      return {kind:"choice", title:"Scenes", instruct:`A scene changes several devices together. Choose one.${pages>1?` Page ${pg+1} of ${pages}.`:""}`, scene:true,
+        speech:`Scenes. A scene changes several devices together. Choose one.${pages>1?` Page ${pg+1} of ${pages}.`:""}`,
+        targets:list};
+    }
     case "sceneReview": {
       const s=SCENES[a.scene];
       return {kind:"sceneReview", title:s.name, scene:s, 
@@ -1253,6 +1339,7 @@ function applyLighting(){
 }
 function runAssistScene(){
   const a=A();
+  state.activeRoom=SCENES[a.scene].steps[0][2]||"living"; // show the room the scene starts in
   go("sceneRunning");
   const s=SCENES[a.scene];
   const host=()=>document.getElementById("seq");
@@ -1265,9 +1352,10 @@ function runAssistScene(){
       log(`${s.name} activated`); state.session.tasks++;
       setTimeout(()=>go("sceneDone"), 700); return;
     }
-    const [label,fn]=s.steps[i];
+    const [label,fn,room]=s.steps[i];
     const li=ul.children[i]; li && li.classList.add("active");
-    fn(); announce(label);
+    if(room && state.rooms[room]) state.activeRoom=room;
+    fn(); if(room) paintScene(); announce(label);
     i++;
     setTimeout(tick,gap);
   };
@@ -1350,8 +1438,9 @@ function renderAssist(keepIndex, silent){
       <button class="control" data-c="exit">Standard Mode<span class="meta sub">switch interaction</span></button>
     </div>` : "";
 
-  const hasScene = body.includes('<div id="envHost"></div>');
-  const bodyRest = hasScene ? body.replace('<div id="envHost"></div>', '') : body;
+  // the live room appears on every Assist screen except the full-page welcome/standby heroes
+  const hasScene = s.kind!=="hero";
+  const bodyRest = body.split('<div id="envHost"></div>').join('');
   v.classList.toggle("split", hasScene);
 
   const captionHTML = `
@@ -1363,13 +1452,13 @@ function renderAssist(keepIndex, silent){
   v.innerHTML = hasScene ? `
     ${captionHTML}
     <div class="assistSplit">
-      <div class="assistScene"><div id="envHost"></div></div>
+      <div class="assistScene"><div id="envHost"></div><div class="assistStatus" id="assistStatus" aria-label="Device status"></div></div>
       <div class="assistMain">${chrome}${bodyRest}${targetsHTML}${controlsHTML}</div>
     </div>` : `
     ${captionHTML}
     ${chrome}${body}${targetsHTML}${controlsHTML}`;
 
-  const host=document.getElementById("envHost");
+  const host=v.querySelector("#envHost"); // scoped: the hidden Standard view also owns an #envHost
   if(host){ mountScene(host); paintScene(); }
 
   // clicking a target also works (assist mode still accepts touch/mouse)
@@ -1399,7 +1488,7 @@ function glyph(label){
     "Security":'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
     "Scenes":'<path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="3.4"/>',
     "Activity":'<path d="M3 12h4l3 7 4-14 3 7h4"/>',
-    "Back":'<path d="M15 5l-7 7 7 7"/>',"Cancel":'<path d="M6 6l12 12M18 6 6 18"/>',
+    "Back":'<path d="M15 5l-7 7 7 7"/>',"More scenes":'<path d="M5 12h14M13 6l6 6-6 6"/>',"Cancel":'<path d="M6 6l12 12M18 6 6 18"/>',
     "Confirm":'<path d="M4 12.5 9.5 18 20 6.5"/>',"Edit":'<path d="M4 20h4L20 8l-4-4L4 16z"/>',
     "Continue":'<path d="M9 5l7 7-7 7"/>',"Finish":'<path d="M4 12.5 9.5 18 20 6.5"/>',
     "Turn on":'<circle cx="12" cy="12" r="7"/><path d="M12 5v6"/>',"Turn off":'<circle cx="12" cy="12" r="7"/>',
@@ -1534,7 +1623,7 @@ function setMode(m){
     renderAssist();
   } else {
     renderStandard();
-    mountScene(document.getElementById("envHost"));
+    mountScene(document.querySelector("#stdView #envHost"));
   }
   applySettings();
 }
